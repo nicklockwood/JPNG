@@ -1,11 +1,11 @@
 Purpose
 --------------
 
-In iOS and Mac OS apps there is typically a choice of two image formats: PNG format allows transparency but produces large image files and is unsuited to compressing images like photographs. JPEG is great for creating small files and provides a range of compression qualities to suit the subject matter, but doesn't allow for transparency.
+In iOS and Mac OS apps there is typically a choice of two image formats: PNG format allows transparency but produces large image files and is unsuited to compressing images like photographs; JPEG is great for creating small files and provides a range of compression qualities to suit the subject matter, but doesn't allow for transparency.
 
-JPNG is a new image format that combines the best of both of the other formats. JPNG is not really a format in its own right, it a simple file wrapper that combines a JPEG and PNG image within the same file. JPEG is used to efficiently compress the RGB portion of the image and PNG is used to store the Alpha channel.
+JPNG is a new image format that combines the best of both of the other formats. JPNG is not really a format in its own right, it's a simple file wrapper that combines a JPEG and PNG image within the same file. JPEG is used to efficiently compress the RGB portion of the image and PNG is used to store the alpha channel.
 
-The JPNG library provides functions for creating and loading files in the JPNG format on Mac or iOS. Included with the library is a simple command-line tool for converting PNG images to JPNG. By default, JPNG can also optionally swizzle the UIImage and NSImage constructor methods so that they will load JPNG files automatically without requiring any additional code in your app. This swizzling can be disabled if you would prefer not to mess with the standard iOS behaviour (see below for details).
+The JPNG library provides functions for creating and loading files in the JPNG format on Mac or iOS. Included with the library is a simple command-line tool for converting PNG images to JPNG. By default, JPNG will also swizzle the UIImage and NSImage constructor methods so that they will load JPNG files automatically without requiring any additional code in your app. This swizzling can be disabled if you would prefer not to mess with the standard core library behaviour (see below for details).
 
 
 Supported OS & SDK Versions
