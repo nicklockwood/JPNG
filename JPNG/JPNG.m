@@ -32,6 +32,7 @@
 
 #import "JPNG.h"
 #import <objc/runtime.h>
+#import <objc/message.h>
 
 
 #if !__has_feature(objc_arc)
@@ -253,8 +254,8 @@ NSData *UIImageJPNGRepresentation(UIImage *image, CGFloat quality)
     if ([NSFileManager instancesRespondToSelector:@selector(normalizedPathForFile:)])
     {
         //StandardPaths library available
-        path = [[NSFileManager defaultManager] normalizedPathForFile:file];
-        scale = [path scaleFromSuffix];
+        path = objc_msgSend([NSFileManager defaultManager], @selector(normalizedPathForFile:), file);
+        scale = [[path valueForKey:@"scaleFromSuffix"] floatValue];
     }
     else
     {
