@@ -1,7 +1,7 @@
 //
 //  JPNG.m
 //
-//  Version 1.0
+//  Version 1.1
 //
 //  Created by Nick Lockwood on 05/01/2013.
 //  Copyright 2013 Charcoal Design
@@ -44,20 +44,6 @@
 
 uint32_t JPNGIdentifier = 'JPEG';
 
-static void JPNG_swizzleInstanceMethod(Class c, SEL original, SEL replacement)
-{
-    Method a = class_getInstanceMethod(c, original);
-    Method b = class_getInstanceMethod(c, replacement);
-    if (class_addMethod(c, original, method_getImplementation(b), method_getTypeEncoding(b)))
-    {
-        class_replaceMethod(c, replacement, method_getImplementation(a), method_getTypeEncoding(a));
-    }
-    else
-    {
-        method_exchangeImplementations(a, b);
-    }
-}
-
 CGImageRef CGImageCreateWithJPNGData(NSData *data)
 {
     if ([data length] <= sizeof(JPNGFooter))
@@ -85,13 +71,13 @@ CGImageRef CGImageCreateWithJPNGData(NSData *data)
     CGDataProviderRef dataProvider = CGDataProviderCreateWithCFData((__bridge CFDataRef)[data subdataWithRange:range]);
     CGImageRef image = CGImageCreateWithJPEGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault);
     CGDataProviderRelease(dataProvider);
-
+    
     //load mask data
     range = NSMakeRange(footer->imageSize, footer->maskSize);
     dataProvider = CGDataProviderCreateWithCFData((__bridge CFDataRef)[data subdataWithRange:range]);
     CGImageRef mask = CGImageCreateWithPNGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault);
     CGDataProviderRelease(dataProvider);
-
+    
     //combine the two
     CGImageRef result = CGImageCreateWithMask(image, mask);
     CGImageRelease(image);
@@ -157,7 +143,7 @@ NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
     free(alphaData);
     
 #ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
-
+    
     //get mask png data
     UIImage *uimask = [UIImage imageWithCGImage:mask];
     CFDataRef maskData = (__bridge CFDataRef)UIImagePNGRepresentation(uimask);
@@ -178,7 +164,7 @@ NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
     CGImageRelease(mask);
     
 #endif
- 
+    
     //check for success
     if (!imageData || !maskData)
     {
@@ -186,7 +172,7 @@ NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
         if (maskData) CFRelease(maskData);
         return nil;
     }
-   
+    
     //create footer
     JPNGFooter footer =
     {
@@ -226,90 +212,6 @@ NSData *UIImageJPNGRepresentation(UIImage *image, CGFloat quality)
     return CGImageJPNGRepresentation([image CGImage], quality);
 }
 
-#if JPNG_SWIZZLE_ENABLED
-
-@implementation UIImage (JPNG)
-
-+ (void)load
-{
-    JPNG_swizzleInstanceMethod(self, @selector(initWithData:), @selector(JPNG_initWithData:));
-    JPNG_swizzleInstanceMethod(self, @selector(initWithContentsOfFile:), @selector(JPNG_initWithContentsOfFile:));
-}
-
-- (id)JPNG_initWithData:(NSData *)data
-{
-    CGImageRef imageRef = CGImageCreateWithJPNGData(data);
-    if (imageRef)
-    {
-        return [self initWithCGImage:(__bridge CGImageRef)CFBridgingRelease(imageRef)];
-    }
-    return [self JPNG_initWithData:data];
-}
-
-- (id)JPNG_initWithContentsOfFile:(NSString *)file
-{
-    NSString *path = nil;
-    CGFloat scale = 1.0f;
-    
-    if ([NSFileManager instancesRespondToSelector:@selector(normalizedPathForFile:)])
-    {
-        //StandardPaths library available
-        path = objc_msgSend([NSFileManager defaultManager], @selector(normalizedPathForFile:), file);
-        scale = [[path valueForKey:@"scaleFromSuffix"] floatValue];
-    }
-    else
-    {
-        //convert to absolute path
-        path = file;
-        if (![path isAbsolutePath])
-        {
-            path = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:path];
-        }
-        
-        //get path extension
-        NSString *extension = [path pathExtension];
-        if (![extension length]) extension = @"png";
-        path = [path stringByDeletingPathExtension];
-        
-        //get device suffix
-        NSString *deviceSuffix = (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)? @"-iphone": @"-ipad";
-        
-        //generate suffixes
-        NSArray *suffixes = @[ extension, [NSString stringWithFormat:@"%@%@", deviceSuffix, extension]];
-        
-        //check for Retina
-        if ([UIScreen mainScreen].scale == 2.0f)
-        {
-            for (NSString *suffix in [suffixes objectEnumerator])
-            {
-                suffixes = [suffixes arrayByAddingObject:[@"2x" stringByAppendingString:suffix]];
-            }
-        }
-     
-        //try all suffixes
-        for (NSString *suffix in [suffixes reverseObjectEnumerator])
-        {
-            NSString *_path = [path stringByAppendingPathSuffix:suffix];
-            if ([[NSFileManager defaultManager] fileExistsAtPath:_path])
-            {
-                path = _path;
-                break;
-            }
-        }
-        
-        //get scale from file suffix
-        scale = ([path rangeOfString:@"@2x"].location != NSNotFound)? 2.0f: 1.0f;
-    }
-    
-    //need to loading ourselves
-    NSData *data = [NSData dataWithContentsOfFile:file];
-    return [self initWithData:data scale:scale];
-}
-
-@end
-
-#endif
-
 
 #else
 #import <AppKit/AppKit.h>
@@ -346,13 +248,177 @@ NSData *NSImageJPNGRepresentation(NSImage *image, CGFloat quality)
     return CGImageJPNGRepresentation(imageRef, quality);
 }
 
+
+#endif
+
+
 #if JPNG_SWIZZLE_ENABLED
+
+static void JPNG_swizzleInstanceMethod(Class c, SEL original, SEL replacement)
+{
+    Method a = class_getInstanceMethod(c, original);
+    Method b = class_getInstanceMethod(c, replacement);
+    if (class_addMethod(c, original, method_getImplementation(b), method_getTypeEncoding(b)))
+    {
+        class_replaceMethod(c, replacement, method_getImplementation(a), method_getTypeEncoding(a));
+    }
+    else
+    {
+        method_exchangeImplementations(a, b);
+    }
+}
+
+static void JPNG_swizzleClassMethod(Class c, SEL original, SEL replacement)
+{
+    Method a = class_getClassMethod(c, original);
+    Method b = class_getClassMethod(c, replacement);
+    method_exchangeImplementations(a, b);
+}
+
+void JPNG_getNormalizedFile(NSString **path, CGFloat *scale)
+{
+    if ([NSFileManager instancesRespondToSelector:@selector(normalizedPathForFile:)])
+    {
+        //StandardPaths library available
+        *path = objc_msgSend([NSFileManager defaultManager], @selector(normalizedPathForFile:), *path);
+        *scale = [[*path valueForKey:@"scaleFromSuffix"] floatValue];
+    }
+    else
+    {
+        //get path extension
+        NSString *extension = [*path pathExtension];
+        if (![extension length]) extension = @"png";
+        *path = [*path stringByDeletingPathExtension];
+        
+        //generate suffixes
+        NSArray *suffixes = @[[@"." stringByAppendingString:extension]];
+        
+#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
+        
+        //get device suffix
+        NSString *deviceSuffix = (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)? @"-iphone": @"-ipad";
+        
+        //add device suffix
+        suffixes = [suffixes arrayByAddingObject:[NSString stringWithFormat:@"%@%@", deviceSuffix, extension]];
+        
+        //get screen scale
+        CGFloat deviceScale = [UIScreen mainScreen].scale;
+        
+#else
+        
+        //get screen scale
+        CGFloat deviceScale = [NSScreen mainScreen].backingScaleFactor;
+        
+#endif
+        
+        //check for Retina version
+        if (deviceScale == 2.0f)
+        {
+            for (NSString *suffix in [suffixes objectEnumerator])
+            {
+                suffixes = [suffixes arrayByAddingObject:[@"@2x" stringByAppendingString:suffix]];
+            }
+        }
+        
+        //try all suffixes
+        for (NSString *suffix in [suffixes reverseObjectEnumerator])
+        {
+            NSString *_path = [*path stringByAppendingString:suffix];
+            if ([[NSFileManager defaultManager] fileExistsAtPath:_path])
+            {
+                *path = _path;
+                break;
+            }
+        }
+        
+        //get scale from file suffix
+        *scale = ([*path rangeOfString:@"@2x"].location != NSNotFound)? 2.0f: 1.0f;
+    }
+}
+
+NSCache *JPNG_imageCache(void)
+{
+    static NSCache *cache = nil;
+    if (cache == nil)
+    {
+        cache = [[NSCache alloc] init];
+    }
+    return cache;
+}
+
+
+#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
+
+
+@implementation UIImage (JPNG)
+
++ (void)load
+{
+    JPNG_swizzleInstanceMethod(self, @selector(initWithData:), @selector(JPNG_initWithData:));
+    JPNG_swizzleInstanceMethod(self, @selector(initWithContentsOfFile:), @selector(JPNG_initWithContentsOfFile:));
+    JPNG_swizzleClassMethod(self, @selector(imageNamed:), @selector(JPNG_imageNamed:));
+}
+
+- (id)JPNG_initWithData:(NSData *)data
+{
+    CGImageRef imageRef = CGImageCreateWithJPNGData(data);
+    if (imageRef)
+    {
+        return [self initWithCGImage:(__bridge CGImageRef)CFBridgingRelease(imageRef)];
+    }
+    return [self JPNG_initWithData:data];
+}
+
+- (id)JPNG_initWithContentsOfFile:(NSString *)file
+{
+    NSString *path = file;
+    CGFloat scale = 1.0f;
+    
+    //emulate Apple's file suffix detection
+    JPNG_getNormalizedFile(&path, &scale);
+    
+    //need to handle loading ourselves
+    NSData *data = [NSData dataWithContentsOfFile:path];
+    return [self initWithData:data scale:scale];
+}
+
++ (id)JPNG_imageNamed:(NSString *)name
+{
+    //only check file extension - too expensive to check file footer
+    if ([[[name pathExtension] lowercaseString] isEqualToString:@"jpng"])
+    {
+        //convert to absolute path
+        NSString *path = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:name];
+
+        //need to handle loading & caching ourselves
+        NSCache *cache = JPNG_imageCache();
+        UIImage *image = [cache objectForKey:name];
+        if (!image)
+        {
+            image = [UIImage imageWithContentsOfFile:path];
+            [cache setObject:image forKey:name];
+        }
+        return image;
+    }
+    else
+    {
+        return [UIImage JPNG_imageNamed:name];
+    }
+}
+
+@end
+
+
+#else
+
 
 @implementation NSImage (JPNG)
 
 + (void)load
 {
     JPNG_swizzleInstanceMethod(self, @selector(initWithData:), @selector(JPNG_initWithData:));
+    JPNG_swizzleInstanceMethod(self, @selector(initWithContentsOfFile:), @selector(JPNG_initWithContentsOfFile:));
+    JPNG_swizzleClassMethod(self, @selector(imageNamed:), @selector(JPNG_imageNamed:));
 }
 
 - (id)JPNG_initWithData:(NSData *)data
@@ -366,11 +432,46 @@ NSData *NSImageJPNGRepresentation(NSImage *image, CGFloat quality)
     return [self JPNG_initWithData:data];
 }
 
-//TODO: check if any other image constructors need to be swizzled
+- (id)JPNG_initWithContentsOfFile:(NSString *)file
+{
+    NSString *path = file;
+    CGFloat scale = 1.0f;
+    
+    //emulate Apple's file suffix detection
+    JPNG_getNormalizedFile(&path, &scale);
+    
+    //need to handle loading ourselves
+    NSData *data = [NSData dataWithContentsOfFile:path];
+    return [self initWithData:data];
+}
+
++ (id)JPNG_imageNamed:(NSString *)name
+{
+    //only check file extension - too expensive to check file footer
+    if ([[[name pathExtension] lowercaseString] isEqualToString:@"jpng"])
+    {
+        //convert to absolute path
+        NSString *path = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:name];
+        
+        //need to handle loading & caching ourselves
+        NSCache *cache = JPNG_imageCache();
+        NSImage *image = [cache objectForKey:name];
+        if (!image)
+        {
+            image = [[NSImage alloc] initWithContentsOfFile:path];
+            if (image) [cache setObject:image forKey:name];
+        }
+        return image;
+    }
+    else
+    {
+        return [NSImage JPNG_imageNamed:name];
+    }
+}
 
 @end
 
-#endif
 
+#endif
 
 #endif

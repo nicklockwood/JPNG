@@ -1,6 +1,6 @@
 JPNG
 
-Version 1.0, January 6th, 2013
+Version 1.1, January 16th, 2013
 
 Copyright (C) 2013 Charcoal Design
 

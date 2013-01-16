@@ -75,7 +75,7 @@ JPNGTool is a command line application that can be used for converting images to
 
     inputfile [outputfile] [quality]
 
-- inputfile is the path to the image file that you wisht to convert. This should ideally be a PNG image with alpha channel. No other formats have been tested currently and images without alpha may crash. This argument is required.
+- inputfile is the path to the image file that you wish to convert. This should ideally be a PNG image with alpha channel. No other formats have been tested currently and images without alpha may crash. This argument is required.
 - outputfile is the path for the saved JPNG file. If this argument is omitted, it defaults to match the inputfile with a .jpng extension.
 - quality is the JPEG compression quality for the RGB part of the image. This should be greater than 0.0 and less than or equal to 1.0, with 1.0 being the maximum quality. If this argument is omitted, it defaults to 0.8.
 
@@ -118,15 +118,18 @@ Or if you prefer, add this to your prefix.pch file:
 
     #define JPNG_SWIZZLE_ENABLED 0
 
-Before you do that though, be reassured that the swizzling that JPNG does is minimal and quite safe. It doesn't break UIImage caching, or cause any other nasty side effects like some solutions out there.
+Before you do that though, be reassured that the swizzling that JPNG does is minimal and quite safe. It doesn't break UIImage or NSImage caching, or cause any other nasty side effects.
 
 The swizzled methods in UIKit are as follows:
 
-    [UIImage initWithContentsOfFile:];
-    [UIImage initWithData:];
+    [UIImage -initWithContentsOfFile:];
+    [UIImage -initWithData:];
+    [UIImage +imageNamed:];
     
 And in AppKit:
 
-    [NSImage initWithData:];
+    [NSImage -initWithContentsOfFile:];
+    [NSImage -initWithData:];
+    [NSImage +imageNamed:];
     
-These methods are all swizzled for the same reason: to check if the image data has the JPNG footer. If it does, it will be loaded using the JPNG image loading functions, otherwise it is passed to the original init methods to be loaded as normal.
+These methods are all swizzled for the same reason: to check if the image is a JPNG file. If it is, it will be loaded using the JPNG image loading functions, otherwise it is passed to the original methods to be loaded as normal.
