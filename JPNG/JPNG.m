@@ -307,7 +307,11 @@ void JPNG_getNormalizedFile(NSString **path, CGFloat *scale)
 #else
         
         //get screen scale
-        CGFloat deviceScale = [NSScreen mainScreen].backingScaleFactor;
+        CGFloat deviceScale = 1.0f;
+        if ([NSScreen instancesRespondToSelector:@selector(backingScaleFactor)])
+        {
+            deviceScale = [[NSScreen mainScreen] backingScaleFactor];
+        }
         
 #endif
         
@@ -442,7 +446,12 @@ NSCache *JPNG_imageCache(void)
     
     //need to handle loading ourselves
     NSData *data = [NSData dataWithContentsOfFile:path];
-    return [self initWithData:data];
+    NSImage *image = [self initWithData:data];
+    if (image)
+    {
+        image.size = NSMakeSize(image.size.width / scale, image.size.height / scale);
+    }
+    return image;
 }
 
 + (id)JPNG_imageNamed:(NSString *)name
