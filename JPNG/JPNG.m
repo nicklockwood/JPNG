@@ -1,7 +1,7 @@
 //
 //  JPNG.m
 //
-//  Version 1.1
+//  Version 1.1.1
 //
 //  Created by Nick Lockwood on 05/01/2013.
 //  Copyright 2013 Charcoal Design
@@ -79,7 +79,16 @@ CGImageRef CGImageCreateWithJPNGData(NSData *data)
     CGDataProviderRelease(dataProvider);
     
     //combine the two
-    CGImageRef result = CGImageCreateWithMask(image, mask);
+    size_t width = CGImageGetWidth(image);
+    size_t height = CGImageGetHeight(image);
+    unsigned char *imageData = calloc(width * height, 4);
+    CGColorSpaceRef colorSpace = CGImageGetColorSpace(image);
+    CGBitmapInfo bitmapInfo = kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little;
+    CGContextRef context = CGBitmapContextCreate(imageData, width, height, 8, width * 4, colorSpace, bitmapInfo);
+    CGRect rect = CGRectMake(0.0f, 0.0f, width, height);
+    CGContextClipToMask(context, rect, mask);
+    CGContextDrawImage(context, rect, image);
+    CGImageRef result = CGBitmapContextCreateImage(context);
     CGImageRelease(image);
     CGImageRelease(mask);
     return result;
@@ -93,9 +102,9 @@ NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
     CFDataRef pixelData = CGDataProviderCopyData(CGImageGetDataProvider(image));
     uint8_t *colorData = (uint8_t *)CFDataGetBytePtr(pixelData);
     uint8_t *alphaData = malloc(width * height);
-    for (int i = 0; i < height; i++)
+    for (size_t i = 0; i < height; i++)
     {
-        for (int j = 0; j < width; j++)
+        for (size_t j = 0; j < width; j++)
         {
             size_t index = i * width + j;
             alphaData[index] = colorData[index * 4 + 3];
@@ -296,10 +305,10 @@ void JPNG_getNormalizedFile(NSString **path, CGFloat *scale)
 #ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
         
         //get device suffix
-        NSString *deviceSuffix = (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)? @"-iphone": @"-ipad";
+        NSString *deviceSuffix = (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)? @"~iphone": @"~ipad";
         
         //add device suffix
-        suffixes = [suffixes arrayByAddingObject:[NSString stringWithFormat:@"%@%@", deviceSuffix, extension]];
+        suffixes = [suffixes arrayByAddingObject:[NSString stringWithFormat:@"%@.%@", deviceSuffix, extension]];
         
         //get screen scale
         CGFloat deviceScale = [UIScreen mainScreen].scale;

@@ -1,3 +1,9 @@
+Version 1.1.1
+
+- JPNG images are now compatible with the GLKit texture loader
+- Fixed a bug in the image file suffix handling logic
+- Now complies with -Wextra warning level
+
 Version 1.1
 
 - Swizzling now works for all image loading methods on Mac and iOS

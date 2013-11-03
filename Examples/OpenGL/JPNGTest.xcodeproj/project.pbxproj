@@ -7,23 +7,23 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		010190C118258FDA00A7F3CF /* GLKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 010190C018258FDA00A7F3CF /* GLKit.framework */; };
 		0152EE0E16A74D5A00E3BB8E /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0152EE0D16A74D5A00E3BB8E /* UIKit.framework */; };
 		0152EE1016A74D5A00E3BB8E /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0152EE0F16A74D5A00E3BB8E /* Foundation.framework */; };
 		0152EE1216A74D5A00E3BB8E /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0152EE1116A74D5A00E3BB8E /* CoreGraphics.framework */; };
 		0152EE1816A74D5A00E3BB8E /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 0152EE1616A74D5A00E3BB8E /* InfoPlist.strings */; };
 		0152EE1A16A74D5A00E3BB8E /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 0152EE1916A74D5A00E3BB8E /* main.m */; };
 		0152EE1E16A74D5A00E3BB8E /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 0152EE1D16A74D5A00E3BB8E /* AppDelegate.m */; };
-		0152EE2016A74D5A00E3BB8E /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = 0152EE1F16A74D5A00E3BB8E /* Default.png */; };
-		0152EE2216A74D5A00E3BB8E /* Default@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0152EE2116A74D5A00E3BB8E /* Default@2x.png */; };
 		0152EE2416A74D5A00E3BB8E /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 0152EE2316A74D5A00E3BB8E /* Default-568h@2x.png */; };
 		0152EE2716A74D5A00E3BB8E /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 0152EE2616A74D5A00E3BB8E /* ViewController.m */; };
-		0152EE2A16A74D5A00E3BB8E /* ViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 0152EE2816A74D5A00E3BB8E /* ViewController.xib */; };
 		0152EE3716A74D7D00E3BB8E /* JPNG.m in Sources */ = {isa = PBXBuildFile; fileRef = 0152EE3616A74D7D00E3BB8E /* JPNG.m */; };
 		0152EE3D16A7519000E3BB8E /* Lake.jpng in Resources */ = {isa = PBXBuildFile; fileRef = 0152EE3B16A7519000E3BB8E /* Lake.jpng */; };
 		0152EE3E16A7519000E3BB8E /* Lake@2x.jpng in Resources */ = {isa = PBXBuildFile; fileRef = 0152EE3C16A7519000E3BB8E /* Lake@2x.jpng */; };
+		01C7312A182594DF000B2CBC /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 01C73129182594DF000B2CBC /* OpenGLES.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		010190C018258FDA00A7F3CF /* GLKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLKit.framework; path = System/Library/Frameworks/GLKit.framework; sourceTree = SDKROOT; };
 		0152EE0916A74D5A00E3BB8E /* JPNGTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = JPNGTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0152EE0D16A74D5A00E3BB8E /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		0152EE0F16A74D5A00E3BB8E /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -34,16 +34,14 @@
 		0152EE1B16A74D5A00E3BB8E /* JPNGTest-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "JPNGTest-Prefix.pch"; sourceTree = "<group>"; };
 		0152EE1C16A74D5A00E3BB8E /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		0152EE1D16A74D5A00E3BB8E /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
-		0152EE1F16A74D5A00E3BB8E /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Default.png; sourceTree = "<group>"; };
-		0152EE2116A74D5A00E3BB8E /* Default@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default@2x.png"; sourceTree = "<group>"; };
 		0152EE2316A74D5A00E3BB8E /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
 		0152EE2516A74D5A00E3BB8E /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
 		0152EE2616A74D5A00E3BB8E /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
-		0152EE2916A74D5A00E3BB8E /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/ViewController.xib; sourceTree = "<group>"; };
 		0152EE3516A74D7D00E3BB8E /* JPNG.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JPNG.h; sourceTree = "<group>"; };
 		0152EE3616A74D7D00E3BB8E /* JPNG.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JPNG.m; sourceTree = "<group>"; };
 		0152EE3B16A7519000E3BB8E /* Lake.jpng */ = {isa = PBXFileReference; lastKnownFileType = file; name = Lake.jpng; path = ../../Images/Lake.jpng; sourceTree = "<group>"; };
 		0152EE3C16A7519000E3BB8E /* Lake@2x.jpng */ = {isa = PBXFileReference; lastKnownFileType = file; name = "Lake@2x.jpng"; path = "../../Images/Lake@2x.jpng"; sourceTree = "<group>"; };
+		01C73129182594DF000B2CBC /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -51,6 +49,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				01C7312A182594DF000B2CBC /* OpenGLES.framework in Frameworks */,
+				010190C118258FDA00A7F3CF /* GLKit.framework in Frameworks */,
 				0152EE0E16A74D5A00E3BB8E /* UIKit.framework in Frameworks */,
 				0152EE1016A74D5A00E3BB8E /* Foundation.framework in Frameworks */,
 				0152EE1216A74D5A00E3BB8E /* CoreGraphics.framework in Frameworks */,
@@ -81,6 +81,8 @@
 		0152EE0C16A74D5A00E3BB8E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				01C73129182594DF000B2CBC /* OpenGLES.framework */,
+				010190C018258FDA00A7F3CF /* GLKit.framework */,
 				0152EE0D16A74D5A00E3BB8E /* UIKit.framework */,
 				0152EE0F16A74D5A00E3BB8E /* Foundation.framework */,
 				0152EE1116A74D5A00E3BB8E /* CoreGraphics.framework */,
@@ -95,7 +97,6 @@
 				0152EE1D16A74D5A00E3BB8E /* AppDelegate.m */,
 				0152EE2516A74D5A00E3BB8E /* ViewController.h */,
 				0152EE2616A74D5A00E3BB8E /* ViewController.m */,
-				0152EE2816A74D5A00E3BB8E /* ViewController.xib */,
 				0152EE1416A74D5A00E3BB8E /* Supporting Files */,
 			);
 			path = JPNGTest;
@@ -110,8 +111,6 @@
 				0152EE1616A74D5A00E3BB8E /* InfoPlist.strings */,
 				0152EE1916A74D5A00E3BB8E /* main.m */,
 				0152EE1B16A74D5A00E3BB8E /* JPNGTest-Prefix.pch */,
-				0152EE1F16A74D5A00E3BB8E /* Default.png */,
-				0152EE2116A74D5A00E3BB8E /* Default@2x.png */,
 				0152EE2316A74D5A00E3BB8E /* Default-568h@2x.png */,
 			);
 			name = "Supporting Files";
@@ -179,10 +178,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0152EE1816A74D5A00E3BB8E /* InfoPlist.strings in Resources */,
-				0152EE2016A74D5A00E3BB8E /* Default.png in Resources */,
-				0152EE2216A74D5A00E3BB8E /* Default@2x.png in Resources */,
 				0152EE2416A74D5A00E3BB8E /* Default-568h@2x.png in Resources */,
-				0152EE2A16A74D5A00E3BB8E /* ViewController.xib in Resources */,
 				0152EE3D16A7519000E3BB8E /* Lake.jpng in Resources */,
 				0152EE3E16A7519000E3BB8E /* Lake@2x.jpng in Resources */,
 			);
@@ -211,14 +207,6 @@
 				0152EE1716A74D5A00E3BB8E /* en */,
 			);
 			name = InfoPlist.strings;
-			sourceTree = "<group>";
-		};
-		0152EE2816A74D5A00E3BB8E /* ViewController.xib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				0152EE2916A74D5A00E3BB8E /* en */,
-			);
-			name = ViewController.xib;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
@@ -279,8 +267,13 @@
 			buildSettings = {
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "JPNGTest/JPNGTest-Prefix.pch";
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				INFOPLIST_FILE = "JPNGTest/JPNGTest-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wextra",
+				);
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -290,8 +283,13 @@
 			buildSettings = {
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "JPNGTest/JPNGTest-Prefix.pch";
+				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				INFOPLIST_FILE = "JPNGTest/JPNGTest-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wextra",
+				);
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;

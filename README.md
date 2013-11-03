@@ -11,7 +11,7 @@ The JPNG library provides functions for creating and loading files in the JPNG f
 Supported OS & SDK Versions
 -----------------------------
 
-* Supported build target - iOS 6.0 / Mac OS 10.8 (Xcode 4.5, Apple LLVM compiler 4.1)
+* Supported build target - iOS 7.0 / Mac OS 10.9 (Xcode 5.0, Apple LLVM compiler 5.0)
 * Earliest supported deployment target - iOS 5.0 / Mac OS 10.7
 * Earliest compatible deployment target - iOS 4.3 / Mac OS 10.6 (64 bit)
 
@@ -133,3 +133,9 @@ And in AppKit:
     [NSImage +imageNamed:];
     
 These methods are all swizzled for the same reason: to check if the image is a JPNG file. If it is, it will be loaded using the JPNG image loading functions, otherwise it is passed to the original methods to be loaded as normal.
+
+
+GLKit support
+---------------------
+
+JPNG images can be used with OpenGL via GLKit, but there is no support for loading JPNG images directly from disk using GLKTextureLoader. Instead load the image using UIImage or NSImage (or any other method listed above), then get the CGImage representation and pass it to the GLKTextureLoader `+textureWithCGImage:options:error:` method (see the OpenGL example for details).
