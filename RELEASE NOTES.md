@@ -1,3 +1,8 @@
+Version 1.1.2
+
+- Now supports stricter compiler warning settings
+- JPNGTool now creates the specified output directory if it doesn't already exist
+
 Version 1.1.1
 
 - JPNG images are now compatible with the GLKit texture loader

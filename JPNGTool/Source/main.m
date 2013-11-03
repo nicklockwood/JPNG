@@ -57,10 +57,14 @@ int main(int argc, const char * argv[])
         if (argc > 2)
         {
             outputFile = [NSString stringWithCString:argv[2] encoding:NSUTF8StringEncoding];
-            if (![[NSFileManager defaultManager] fileExistsAtPath:inputFile])
+            NSString *outputFolder = [outputFile stringByDeletingLastPathComponent];
+            if (![[NSFileManager defaultManager] fileExistsAtPath:outputFolder])
             {
-                NSLog(@"Input file '%@' does not exist", inputFile);
-                return 0;
+                if (![[NSFileManager defaultManager] createDirectoryAtPath:outputFolder withIntermediateDirectories:YES attributes:nil error:NULL])
+                {
+                    NSLog(@"Failed to create output file directory at path '%@'", outputFolder);
+                    return 0;
+                }
             }
         }
         

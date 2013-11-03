@@ -1,7 +1,7 @@
 //
 //  JPNG.m
 //
-//  Version 1.1.1
+//  Version 1.1.2
 //
 //  Created by Nick Lockwood on 05/01/2013.
 //  Copyright 2013 Charcoal Design
@@ -52,43 +52,45 @@ CGImageRef CGImageCreateWithJPNGData(NSData *data)
         return NULL;
     }
     
-    JPNGFooter *footer = (JPNGFooter *)(data.bytes + [data length] - sizeof(JPNGFooter));
-    if (footer->identifier != JPNGIdentifier)
+    JPNGFooter footer;
+    memcpy(&footer, (uint8_t *)data.bytes + [data length] - sizeof(JPNGFooter), sizeof(JPNGFooter));
+    if (footer.identifier != JPNGIdentifier)
     {
         //not a JPNG
         return NULL;
     }
     
-    if (footer->majorVersion > 1)
+    if (footer.majorVersion > 1)
     {
         //not compatible
-        NSLog(@"This version of the JPNG library doesn't support JPNG version %i files", footer->majorVersion);
+        NSLog(@"This version of the JPNG library doesn't support JPNG version %i files", footer.majorVersion);
         return NULL;
     }
     
     //load image data
-    NSRange range = NSMakeRange(0, footer->imageSize);
+    NSRange range = NSMakeRange(0, footer.imageSize);
     CGDataProviderRef dataProvider = CGDataProviderCreateWithCFData((__bridge CFDataRef)[data subdataWithRange:range]);
     CGImageRef image = CGImageCreateWithJPEGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault);
     CGDataProviderRelease(dataProvider);
     
     //load mask data
-    range = NSMakeRange(footer->imageSize, footer->maskSize);
+    range = NSMakeRange(footer.imageSize, footer.maskSize);
     dataProvider = CGDataProviderCreateWithCFData((__bridge CFDataRef)[data subdataWithRange:range]);
     CGImageRef mask = CGImageCreateWithPNGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault);
     CGDataProviderRelease(dataProvider);
     
-    //combine the two
+    //create output context
     size_t width = CGImageGetWidth(image);
     size_t height = CGImageGetHeight(image);
-    unsigned char *imageData = calloc(width * height, 4);
+    uint8_t *imageData = (uint8_t *)calloc(width * height, 4);
     CGColorSpaceRef colorSpace = CGImageGetColorSpace(image);
-    CGBitmapInfo bitmapInfo = kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little;
+    CGBitmapInfo bitmapInfo = (CGBitmapInfo)(kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
     CGContextRef context = CGBitmapContextCreate(imageData, width, height, 8, width * 4, colorSpace, bitmapInfo);
     CGRect rect = CGRectMake(0.0f, 0.0f, width, height);
     CGContextClipToMask(context, rect, mask);
     CGContextDrawImage(context, rect, image);
     CGImageRef result = CGBitmapContextCreateImage(context);
+    CGContextRelease(context);
     CGImageRelease(image);
     CGImageRelease(mask);
     return result;
@@ -101,7 +103,7 @@ NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
     size_t height = CGImageGetHeight(image);
     CFDataRef pixelData = CGDataProviderCopyData(CGImageGetDataProvider(image));
     uint8_t *colorData = (uint8_t *)CFDataGetBytePtr(pixelData);
-    uint8_t *alphaData = malloc(width * height);
+    uint8_t *alphaData = (uint8_t *)malloc(width * height);
     for (size_t i = 0; i < height; i++)
     {
         for (size_t j = 0; j < width; j++)
@@ -113,11 +115,11 @@ NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
     CFRelease(pixelData);
     
     //get color image
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-    CGContextRef context = CGBitmapContextCreate(colorData, width, height, 8, width * 4, colorSpace, kCGImageAlphaNoneSkipLast);
+    CGColorSpaceRef colorSpace = CGImageGetColorSpace(image);
+    CGBitmapInfo bitmapInfo = (CGBitmapInfo)(kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
+    CGContextRef context = CGBitmapContextCreate(colorData, width, height, 8, width * 4, colorSpace, bitmapInfo);
     image = CGBitmapContextCreateImage(context);
     CGContextRelease(context);
-    CGColorSpaceRelease(colorSpace);
     
 #ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
     
@@ -194,8 +196,8 @@ NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
     //create data
     NSMutableData *data = [NSMutableData dataWithLength:footer.imageSize + footer.maskSize + footer.footerSize];
     memcpy(data.mutableBytes, CFDataGetBytePtr(imageData), footer.imageSize);
-    memcpy(data.mutableBytes + footer.imageSize, CFDataGetBytePtr(maskData), footer.maskSize);
-    memcpy(data.mutableBytes + footer.imageSize + footer.maskSize, &footer, footer.footerSize);
+    memcpy((uint8_t *)data.mutableBytes + footer.imageSize, CFDataGetBytePtr(maskData), footer.maskSize);
+    memcpy((uint8_t *)data.mutableBytes + footer.imageSize + footer.maskSize, &footer, footer.footerSize);
     CFRelease(imageData);
     CFRelease(maskData);
     return data;
@@ -286,10 +288,11 @@ static void JPNG_swizzleClassMethod(Class c, SEL original, SEL replacement)
 
 void JPNG_getNormalizedFile(NSString **path, CGFloat *scale)
 {
-    if ([NSFileManager instancesRespondToSelector:@selector(normalizedPathForFile:)])
+    SEL normalizedPathSelector = NSSelectorFromString(@"normalizedPathForFile:");
+    if ([NSFileManager instancesRespondToSelector:normalizedPathSelector])
     {
         //StandardPaths library available
-        *path = objc_msgSend([NSFileManager defaultManager], @selector(normalizedPathForFile:), *path);
+        *path = ((id (*)(id, SEL, id))objc_msgSend)([NSFileManager defaultManager], normalizedPathSelector, *path);
         *scale = [[*path valueForKey:@"scaleFromSuffix"] floatValue];
     }
     else
@@ -402,7 +405,7 @@ NSCache *JPNG_imageCache(void)
     {
         //convert to absolute path
         NSString *path = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:name];
-
+        
         //need to handle loading & caching ourselves
         NSCache *cache = JPNG_imageCache();
         UIImage *image = [cache objectForKey:name];
