@@ -417,7 +417,7 @@ void JPNG_getNormalizedFile(NSString **path, CGFloat *scale)
             if (!image)
             {
                 image = [UIImage imageWithContentsOfFile:path];
-                [cache setObject:image forKey:name];
+                if (image) [cache setObject:image forKey:name];
             }
             return image;
         }
