@@ -26,6 +26,12 @@ JPNG requires ARC. If you wish to use JPNG in a non-ARC project, just add the -f
 If you wish to convert your whole project to ARC, comment out the #error line in JPNG.m, then run the Edit > Refactor > Convert to Objective-C ARC... tool in Xcode and make sure all files that you wish to use ARC for (including JPNG.m) are checked.
 
 
+Thread Safety
+--------------
+
+It is safe to load JPNG instances on a background thread, and to use them on a thread other than the one on which they were created. It is safe to call the methods rentrantly/concurrently on different threads.
+
+
 Installation
 ---------------
 

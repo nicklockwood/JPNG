@@ -1,7 +1,7 @@
 //
 //  JPNG.m
 //
-//  Version 1.1.2
+//  Version 1.1.3
 //
 //  Created by Nick Lockwood on 05/01/2013.
 //  Copyright 2013 Charcoal Design
@@ -82,10 +82,9 @@ CGImageRef CGImageCreateWithJPNGData(NSData *data)
     //create output context
     size_t width = CGImageGetWidth(image);
     size_t height = CGImageGetHeight(image);
-    uint8_t *imageData = (uint8_t *)calloc(width * height, 4);
     CGColorSpaceRef colorSpace = CGImageGetColorSpace(image);
     CGBitmapInfo bitmapInfo = (CGBitmapInfo)(kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
-    CGContextRef context = CGBitmapContextCreate(imageData, width, height, 8, width * 4, colorSpace, bitmapInfo);
+    CGContextRef context = CGBitmapContextCreate(NULL, width, height, 8, width * 4, colorSpace, bitmapInfo);
     CGRect rect = CGRectMake(0.0f, 0.0f, width, height);
     CGContextClipToMask(context, rect, mask);
     CGContextDrawImage(context, rect, image);
@@ -352,16 +351,6 @@ void JPNG_getNormalizedFile(NSString **path, CGFloat *scale)
     }
 }
 
-NSCache *JPNG_imageCache(void)
-{
-    static NSCache *cache = nil;
-    if (cache == nil)
-    {
-        cache = [[NSCache alloc] init];
-    }
-    return cache;
-}
-
 
 #ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
 
@@ -373,6 +362,20 @@ NSCache *JPNG_imageCache(void)
     JPNG_swizzleInstanceMethod(self, @selector(initWithData:), @selector(JPNG_initWithData:));
     JPNG_swizzleInstanceMethod(self, @selector(initWithContentsOfFile:), @selector(JPNG_initWithContentsOfFile:));
     JPNG_swizzleClassMethod(self, @selector(imageNamed:), @selector(JPNG_imageNamed:));
+}
+
++ (NSCache *)JPNG_imageCache
+{
+    static NSCache *cache = nil;
+    if (cache == nil)
+    {
+        cache = [[NSCache alloc] init];
+        [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationDidReceiveMemoryWarningNotification object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(__unused NSNotification *note) {
+            
+            [cache removeAllObjects];
+        }];
+    }
+    return cache;
 }
 
 - (id)JPNG_initWithData:(NSData *)data
@@ -406,15 +409,18 @@ NSCache *JPNG_imageCache(void)
         //convert to absolute path
         NSString *path = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:name];
         
-        //need to handle loading & caching ourselves
-        NSCache *cache = JPNG_imageCache();
-        UIImage *image = [cache objectForKey:name];
-        if (!image)
+        @synchronized ([self class])
         {
-            image = [UIImage imageWithContentsOfFile:path];
-            [cache setObject:image forKey:name];
+            //need to handle loading & caching ourselves
+            NSCache *cache = [self JPNG_imageCache];
+            UIImage *image = [cache objectForKey:name];
+            if (!image)
+            {
+                image = [UIImage imageWithContentsOfFile:path];
+                [cache setObject:image forKey:name];
+            }
+            return image;
         }
-        return image;
     }
     else
     {
@@ -435,6 +441,16 @@ NSCache *JPNG_imageCache(void)
     JPNG_swizzleInstanceMethod(self, @selector(initWithData:), @selector(JPNG_initWithData:));
     JPNG_swizzleInstanceMethod(self, @selector(initWithContentsOfFile:), @selector(JPNG_initWithContentsOfFile:));
     JPNG_swizzleClassMethod(self, @selector(imageNamed:), @selector(JPNG_imageNamed:));
+}
+
++ (NSCache *)JPNG_imageCache
+{
+    static NSCache *cache = nil;
+    if (cache == nil)
+    {
+        cache = [[NSCache alloc] init];
+    }
+    return cache;
 }
 
 - (id)JPNG_initWithData:(NSData *)data
@@ -474,15 +490,18 @@ NSCache *JPNG_imageCache(void)
         //convert to absolute path
         NSString *path = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:name];
         
-        //need to handle loading & caching ourselves
-        NSCache *cache = JPNG_imageCache();
-        NSImage *image = [cache objectForKey:name];
-        if (!image)
+        @synchronized ([self class])
         {
-            image = [[NSImage alloc] initWithContentsOfFile:path];
-            if (image) [cache setObject:image forKey:name];
+            //need to handle loading & caching ourselves
+            NSCache *cache = [self JPNG_imageCache];
+            NSImage *image = [cache objectForKey:name];
+            if (!image)
+            {
+                image = [[NSImage alloc] initWithContentsOfFile:path];
+                if (image) [cache setObject:image forKey:name];
+            }
+            return image;
         }
-        return image;
     }
     else
     {
