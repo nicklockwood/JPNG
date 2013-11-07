@@ -115,7 +115,8 @@ NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
     
     //get color image
     CGColorSpaceRef colorSpace = CGImageGetColorSpace(image);
-    CGBitmapInfo bitmapInfo = (CGBitmapInfo)(kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
+    CGBitmapInfo byteOrder = CGImageGetBitmapInfo(image) & kCGBitmapByteOrderMask;
+    CGBitmapInfo bitmapInfo = (CGBitmapInfo)(kCGImageAlphaPremultipliedLast | byteOrder);
     CGContextRef context = CGBitmapContextCreate(colorData, width, height, 8, width * 4, colorSpace, bitmapInfo);
     image = CGBitmapContextCreateImage(context);
     CGContextRelease(context);
@@ -146,7 +147,7 @@ NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
     
     //get mask image
     colorSpace = CGColorSpaceCreateDeviceGray();
-    context = CGBitmapContextCreate(alphaData, width, height, 8, width, colorSpace, 0);
+    context = CGBitmapContextCreate(alphaData, width, height, 8, width, colorSpace, (CGBitmapInfo)0);
     CGImageRef mask = CGBitmapContextCreateImage(context);
     CGContextRelease(context);
     CGColorSpaceRelease(colorSpace);

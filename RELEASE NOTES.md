@@ -1,6 +1,7 @@
 Version 1.1.3
 
-- Fixed memory leak when creting image
+- Fixed memory leak when creating image
+- Fixed color shift issue with JPNGTool
 - Improved thread safety for +imageNamed: methods
 - Now flushes image cache on iOS in the event of a low memory warning
 
