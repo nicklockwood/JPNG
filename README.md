@@ -85,9 +85,10 @@ JPNGTool is a command line application that can be used for converting images to
 - outputfile is the path for the saved JPNG file. If this argument is omitted, it defaults to match the inputfile with a .jpng extension.
 - quality is the JPEG compression quality for the RGB part of the image. This should be greater than 0.0 and less than or equal to 1.0, with 1.0 being the maximum quality. If this argument is omitted, it defaults to 0.8.
 
-JPNGTool is designed to convert a single image at a time, however you can use the following command to batch-convert a folder full of images:
+JPNGTool is designed to convert a single image at a time, however you can use the following commands to batch-convert a folder full of images:
 
-    find /Path/To/Image/Directory/ -name \*.png | sed 's/\.png//g' | xargs -I % -n 1  /Path/To/JPNGTool %.png %.jpng 0.8
+    cd /Path/To/Image/Directory/
+    find ./ -name \*.png | sed 's/\.png//g' | xargs -I % -n 1 /Path/To/JPNGTool %.png %.jpng 0.8
 
 
 File Format
@@ -145,3 +146,14 @@ GLKit support
 ---------------------
 
 JPNG images can be used with OpenGL via GLKit, but there is no support for loading JPNG images directly from disk using GLKTextureLoader. Instead load the image using UIImage or NSImage (or any other method listed above), then get the CGImage representation and pass it to the GLKTextureLoader `+textureWithCGImage:options:error:` method (see the OpenGL example for details).
+
+
+Benchmark
+---------------------
+
+The examples folder includes a benchmarking tool to compare PNG vs JPNG performance. To get an accurate result, ensure that you do the following:
+
+1. Run on a device, not the simulator
+2. Build in release mode, not debug
+3. Disconnect from the debugger / Xcode
+4. Kill the app and re-run a few times to verify

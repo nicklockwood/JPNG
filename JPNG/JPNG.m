@@ -78,7 +78,7 @@ CGImageRef CGImageCreateWithJPNGData(NSData *data)
     dataProvider = CGDataProviderCreateWithCFData((__bridge CFDataRef)[data subdataWithRange:range]);
     CGImageRef mask = CGImageCreateWithPNGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault);
     CGDataProviderRelease(dataProvider);
-    
+
     //create output context
     size_t width = CGImageGetWidth(image);
     size_t height = CGImageGetHeight(image);
