@@ -12,3 +12,9 @@
     #import <UIKit/UIKit.h>
     #import <Foundation/Foundation.h>
 #endif
+
+//make sure swizzling is enabled or the test won't work
+#define JPNG_SWIZZLE_ENABLED 1
+
+//disable forced decompression to ensure the test is fair
+#define JPNG_ALWAYS_FORCE_DECOMPRESSION 0

@@ -1,3 +1,10 @@
+Version 1.2
+
+- JPNG images are no longer decompressed automatically in most cases, bringing performance in line with ordinary PNGs (see README for details)
+- Added forceDecompression option to CGImageCreateWithJPNGData()
+- Added JPNG_ALWAYS_FORCE_DECOMPRESSION global setting
+- Now complies with -Weverything warning level
+
 Version 1.1.3
 
 - Fixed memory leak when creating image

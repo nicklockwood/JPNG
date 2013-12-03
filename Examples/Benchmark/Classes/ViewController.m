@@ -29,9 +29,6 @@
 
 - (CFTimeInterval)loadImageForOneSec:(NSString *)path
 {
-    //create drawing context to use for decompression
-    UIGraphicsBeginImageContext(CGSizeMake(1, 1));
-    
     //start timing
     NSInteger imagesLoaded = 0;
     CFTimeInterval endTime = 0;
@@ -41,8 +38,12 @@
         //load image
         UIImage *image = [UIImage imageWithContentsOfFile:path];
         
-        //decompress image by drawing it
+        //decompress image by drawing it into a new context
+        //JPNG can actually do this automatically using the JPNG_FORCE_DECOMPRESSION option
+        //but we have disabled that option in prefix.pch in order to make this test as fair as possible
+        UIGraphicsBeginImageContextWithOptions(image.size, NO, image.scale);
         [image drawAtPoint:CGPointZero];
+        UIGraphicsEndImageContext();
         
         //update totals
         imagesLoaded ++;

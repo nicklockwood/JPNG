@@ -41,9 +41,9 @@ To use JPNG, just drag the class files into your project. JPNG will automaticall
 Cross-platform functions
 --------------------------
 
-    CGImageRef CGImageCreateWithJPNGData(NSData *data);
+    CGImageRef CGImageCreateWithJPNGData(NSData *data, BOOL forceDecompression);
     
-This method creates a CGImage object from JPNG encoded data. It is the responsibility of the caller to release this CGImage object using CGImageRelease();
+This method creates a CGImage object from JPNG encoded data. It is the responsibility of the caller to release this CGImage object using CGImageRelease(...). The forceDecompression argument determines if the image data should be decompressed in advance, or whether decompression can be deferred until later. It is advisable to set this argument to YES to improve drawing performance, unless you are planning to decompress the image yourself later by drawing it into a new CGContext.
     
     NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality);
 
@@ -73,6 +73,34 @@ This method returns a NSImage object created from JPNG encoded data. The NSImage
     
 This method returns an NSData representation of the supplied image. The NSData object that is returned is autoreleased. The supplied image must contain an alpha channel and the behaviour is undefined if it does not (that means it will probably crash). The quality value controls the JPEG compression level and should be in the range 0.0 to 1.0, with 1.0 being the highest possible quality.
 
+
+Decompression
+--------------
+
+By default, iOS typically defers decompression of images until they are first drawn, and may discard the decompressed data when it is no longer needed. The only exception to this is if you load images using the [UIImage imageNamed:] method. This is good from a memory consumption standpoint, but reduces the performance of drawing images that are loaded using [UIImage imageWithContentsOfFile:], or equivalent.
+
+JPNG attempts to emulate this behaviour as closely as possible, so JPNG images loaded using the UIImageWithJPNGData(...) and NSImageWithJPNGData(...) methods return compressed images by default, and the swizzled iOS and AppKit image loading methods behave the same as their native counteprats.
+
+If you would prefer to force decompression for all images (to improve drawing performance at the expense of loading time and memory consumption), you can do so by adding the following pre-compiler macro to your build settings:
+
+    JPNG_ALWAYS_FORCE_DECOMPRESSION=1
+
+Or if you prefer, add this to your prefix.pch file:
+
+    #define JPNG_ALWAYS_FORCE_DECOMPRESSION 1
+
+To decide whether to decompress on a per-image basis, you can load images using the CGImageCreateWithJPNGData(...) function, which has an explicit forceDecompression argument.
+
+If you aren't sure how the image will be loaded and want to code defensively, you can decompress a compressed JPNG by drawing it into a temporary image context, like this:
+
+    UIImage *compressedJPNG = ...
+    UIGraphicsBeginImageContextWithOptions(compressedJPNG.size, NO, image.compressedJPNG);
+    [image drawAtPoint:CGPointZero];
+    UIImage *uncompressedJPNG = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
+The uncompressed image will then be optimized for drawing.
+    
 
 JPNGTool
 --------------
@@ -147,6 +175,18 @@ GLKit support
 
 JPNG images can be used with OpenGL via GLKit, but there is no support for loading JPNG images directly from disk using GLKTextureLoader. Instead load the image using UIImage or NSImage (or any other method listed above), then get the CGImage representation and pass it to the GLKTextureLoader `+textureWithCGImage:options:error:` method (see the OpenGL example for details).
 
+Note: OpenGL requires text image data to be provided in a particular format. By default, JPNG only returns the correct format if you load images using the [UIImage/NSImage imageNamed:] method, or using the CGImageCreateWithJPNGData(...) function with the forceDecompression argument set to YES. Images loaded using the other methods will not work correctly with GLKImageLoader unless the JPNG_ALWAYS_FORCE_DECOMPRESSION option is enabled.
+
+If for some reason you need to load your JPNG in a different way, or you aren't sure how the image will be loaded and want to code defensively, you can convert a compressed JPNG to the correct format for GLKImageLoader by drawing it into a temporary image context, like this.
+
+    UIImage *compressedJPNG = ...
+    UIGraphicsBeginImageContextWithOptions(compressedJPNG.size, NO, image.compressedJPNG);
+    [image drawAtPoint:CGPointZero];
+    UIImage *uncompressedJPNG = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    
+The uncompressedJPNG image will now be safe to use with GLKImageLoader.
+    
 
 Benchmark
 ---------------------

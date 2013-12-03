@@ -1,7 +1,7 @@
 //
 //  JPNG.m
 //
-//  Version 1.1.3
+//  Version 1.2
 //
 //  Created by Nick Lockwood on 05/01/2013.
 //  Copyright 2013 Charcoal Design
@@ -30,6 +30,12 @@
 //  3. This notice may not be removed or altered from any source distribution.
 //
 
+#pragma GCC diagnostic ignored "-Wfour-char-constants"
+#pragma GCC diagnostic ignored "-Wmissing-prototypes"
+#pragma GCC diagnostic ignored "-Wselector"
+#pragma GCC diagnostic ignored "-Wgnu"
+
+
 #import "JPNG.h"
 #import <objc/runtime.h>
 #import <objc/message.h>
@@ -44,7 +50,7 @@
 
 uint32_t JPNGIdentifier = 'JPEG';
 
-CGImageRef CGImageCreateWithJPNGData(NSData *data)
+CGImageRef CGImageCreateWithJPNGData(NSData *data, BOOL forceDecompression)
 {
     if ([data length] <= sizeof(JPNGFooter))
     {
@@ -79,20 +85,31 @@ CGImageRef CGImageCreateWithJPNGData(NSData *data)
     CGImageRef mask = CGImageCreateWithPNGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault);
     CGDataProviderRelease(dataProvider);
 
-    //create output context
-    size_t width = CGImageGetWidth(image);
-    size_t height = CGImageGetHeight(image);
-    CGColorSpaceRef colorSpace = CGImageGetColorSpace(image);
-    CGBitmapInfo bitmapInfo = (CGBitmapInfo)(kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
-    CGContextRef context = CGBitmapContextCreate(NULL, width, height, 8, width * 4, colorSpace, bitmapInfo);
-    CGRect rect = CGRectMake(0.0f, 0.0f, width, height);
-    CGContextClipToMask(context, rect, mask);
-    CGContextDrawImage(context, rect, image);
-    CGImageRef result = CGBitmapContextCreateImage(context);
-    CGContextRelease(context);
-    CGImageRelease(image);
-    CGImageRelease(mask);
-    return result;
+    if (forceDecompression)
+    {
+        //draw image into optimized image context
+        size_t width = CGImageGetWidth(image);
+        size_t height = CGImageGetHeight(image);
+        CGColorSpaceRef colorSpace = CGImageGetColorSpace(image);
+        CGBitmapInfo bitmapInfo = (CGBitmapInfo)(kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
+        CGContextRef context = CGBitmapContextCreate(NULL, width, height, 8, width * 4, colorSpace, bitmapInfo);
+        CGRect rect = CGRectMake(0.0f, 0.0f, width, height);
+        CGContextClipToMask(context, rect, mask);
+        CGContextDrawImage(context, rect, image);
+        CGImageRef result = CGBitmapContextCreateImage(context);
+        CGContextRelease(context);
+        CGImageRelease(image);
+        CGImageRelease(mask);
+        return result;
+    }
+    else
+    {
+        //return still-compressed image
+        CGImageRef result = CGImageCreateWithMask(image, mask);
+        CGImageRelease(image);
+        CGImageRelease(mask);
+        return result;
+    }
 }
 
 NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
@@ -212,7 +229,7 @@ NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
 
 UIImage *UIImageWithJPNGData(NSData *data, CGFloat scale, UIImageOrientation orientation)
 {
-    CGImageRef imageRef = CGImageCreateWithJPNGData(data);
+    CGImageRef imageRef = CGImageCreateWithJPNGData(data, JPNG_ALWAYS_FORCE_DECOMPRESSION);
     return [UIImage imageWithCGImage:(__bridge CGImageRef)CFBridgingRelease(imageRef)
                                scale:scale
                          orientation:orientation];
@@ -232,7 +249,7 @@ NSData *UIImageJPNGRepresentation(UIImage *image, CGFloat quality)
 
 NSImage *NSImageWithJPNGData(NSData *data, CGFloat scale)
 {
-    CGImageRef imageRef = CGImageCreateWithJPNGData(data);
+    CGImageRef imageRef = CGImageCreateWithJPNGData(data, JPNG_ALWAYS_FORCE_DECOMPRESSION);
     if (imageRef)
     {
         scale = scale ?: [NSScreen mainScreen].backingScaleFactor;
@@ -381,7 +398,7 @@ void JPNG_getNormalizedFile(NSString **path, CGFloat *scale)
 
 - (id)JPNG_initWithData:(NSData *)data
 {
-    CGImageRef imageRef = CGImageCreateWithJPNGData(data);
+    CGImageRef imageRef = CGImageCreateWithJPNGData(data, JPNG_ALWAYS_FORCE_DECOMPRESSION);
     if (imageRef)
     {
         return [self initWithCGImage:(__bridge CGImageRef)CFBridgingRelease(imageRef)];
@@ -391,10 +408,9 @@ void JPNG_getNormalizedFile(NSString **path, CGFloat *scale)
 
 - (id)JPNG_initWithContentsOfFile:(NSString *)file
 {
+    //emulate Apple's file suffix detection
     NSString *path = file;
     CGFloat scale = 1.0f;
-    
-    //emulate Apple's file suffix detection
     JPNG_getNormalizedFile(&path, &scale);
     
     //need to handle loading ourselves
@@ -407,17 +423,21 @@ void JPNG_getNormalizedFile(NSString **path, CGFloat *scale)
     //only check file extension - too expensive to check file footer
     if ([[[name pathExtension] lowercaseString] isEqualToString:@"jpng"])
     {
-        //convert to absolute path
-        NSString *path = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:name];
-        
         @synchronized ([self class])
         {
+            //emulate Apple's file suffix detection
+            NSString *path = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:name];
+            CGFloat scale = 1.0f;
+            JPNG_getNormalizedFile(&path, &scale);
+            
             //need to handle loading & caching ourselves
             NSCache *cache = [self JPNG_imageCache];
             UIImage *image = [cache objectForKey:name];
             if (!image)
             {
-                image = [UIImage imageWithContentsOfFile:path];
+                NSData *data = [NSData dataWithContentsOfFile:path];
+                CGImageRef imageRef = CGImageCreateWithJPNGData(data, YES);
+                image = [UIImage imageWithCGImage:imageRef scale:scale orientation:UIImageOrientationUp];
                 if (image) [cache setObject:image forKey:name];
             }
             return image;
@@ -456,7 +476,7 @@ void JPNG_getNormalizedFile(NSString **path, CGFloat *scale)
 
 - (id)JPNG_initWithData:(NSData *)data
 {
-    CGImageRef imageRef = CGImageCreateWithJPNGData(data);
+    CGImageRef imageRef = CGImageCreateWithJPNGData(data, JPNG_ALWAYS_FORCE_DECOMPRESSION);
     if (imageRef)
     {
         NSSize size = NSMakeSize(CGImageGetWidth(imageRef), CGImageGetHeight(imageRef));
@@ -467,10 +487,9 @@ void JPNG_getNormalizedFile(NSString **path, CGFloat *scale)
 
 - (id)JPNG_initWithContentsOfFile:(NSString *)file
 {
+    //emulate Apple's file suffix detection
     NSString *path = file;
     CGFloat scale = 1.0f;
-    
-    //emulate Apple's file suffix detection
     JPNG_getNormalizedFile(&path, &scale);
     
     //need to handle loading ourselves
@@ -488,17 +507,25 @@ void JPNG_getNormalizedFile(NSString **path, CGFloat *scale)
     //only check file extension - too expensive to check file footer
     if ([[[name pathExtension] lowercaseString] isEqualToString:@"jpng"])
     {
-        //convert to absolute path
-        NSString *path = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:name];
-        
         @synchronized ([self class])
         {
+            //emulate Apple's file suffix detection
+            NSString *path = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:name];
+            CGFloat scale = 1.0f;
+            JPNG_getNormalizedFile(&path, &scale);
+            
             //need to handle loading & caching ourselves
             NSCache *cache = [self JPNG_imageCache];
             NSImage *image = [cache objectForKey:name];
             if (!image)
             {
-                image = [[NSImage alloc] initWithContentsOfFile:path];
+                NSData *data = [NSData dataWithContentsOfFile:path];
+                CGImageRef imageRef = CGImageCreateWithJPNGData(data, YES);
+                if (imageRef)
+                {
+                    NSSize size = NSMakeSize(CGImageGetWidth(imageRef) / scale, CGImageGetHeight(imageRef) / scale);
+                    image = [[self alloc] initWithCGImage:(__bridge CGImageRef)CFBridgingRelease(imageRef) size:size];
+                }
                 if (image) [cache setObject:image forKey:name];
             }
             return image;

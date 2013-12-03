@@ -1,7 +1,7 @@
 //
 //  JPNG.h
 //
-//  Version 1.1.3
+//  Version 1.2
 //
 //  Created by Nick Lockwood on 05/01/2013.
 //  Copyright 2013 Charcoal Design
@@ -39,6 +39,11 @@
 #endif
 
 
+#ifndef JPNG_ALWAYS_FORCE_DECOMPRESSION
+#define JPNG_ALWAYS_FORCE_DECOMPRESSION 0
+#endif
+
+
 extern uint32_t JPNGIdentifier;
 
 
@@ -56,7 +61,7 @@ JPNGFooter;
 
 //cross-platform implementation
 
-CGImageRef CGImageCreateWithJPNGData(NSData *data);
+CGImageRef CGImageCreateWithJPNGData(NSData *data, BOOL forceDecompression);
 NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality);
 
 
