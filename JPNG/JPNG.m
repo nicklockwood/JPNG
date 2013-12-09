@@ -60,7 +60,7 @@ CGImageRef CGImageCreateWithJPNGData(NSData *data, BOOL forceDecompression)
     
     JPNGFooter footer;
     memcpy(&footer, (uint8_t *)data.bytes + [data length] - sizeof(JPNGFooter), sizeof(JPNGFooter));
-    if (footer.identifier != JPNGIdentifier)
+    if (footer.identifier != JPNGIdentifier && footer.identifier != 'JPEG')
     {
         //not a JPNG
         return NULL;
