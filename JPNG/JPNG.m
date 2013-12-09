@@ -48,7 +48,7 @@
 
 //cross-platform implementation
 
-uint32_t JPNGIdentifier = 'JPEG';
+uint32_t JPNGIdentifier = 'JPNG';
 
 CGImageRef CGImageCreateWithJPNGData(NSData *data, BOOL forceDecompression)
 {
