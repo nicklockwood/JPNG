@@ -59,7 +59,7 @@ CGImageRef CGImageCreateWithJPNGData(NSData *data, BOOL forceDecompression)
     }
     
     JPNGFooter footer;
-    memcpy(&footer, (uint8_t *)data.bytes + [data length] - sizeof(JPNGFooter), sizeof(JPNGFooter));
+    [data getBytes:&footer range:NSMakeRange([data length] - sizeof(JPNGFooter), sizeof(JPNGFooter))];
     if (footer.identifier != JPNGIdentifier && footer.identifier != 'JPEG')
     {
         //not a JPNG
@@ -150,7 +150,8 @@ NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
     //get image jpeg data
     CFMutableDataRef imageData = CFDataCreateMutable(NULL, 0);
     CGImageDestinationRef destination = CGImageDestinationCreateWithData(imageData, kUTTypeJPEG, 1, NULL);
-    NSDictionary *properties = @{(__bridge id)kCGImageDestinationLossyCompressionQuality: @(quality)};
+    NSDictionary *properties = @{(__bridge id)kCGImageDestinationLossyCompressionQuality: @(quality),
+                                 (__bridge id)kCGImageDestinationBackgroundColor: (__bridge id)CGColorGetConstantColor(kCGColorClear)};
     CGImageDestinationAddImage(destination, image, (__bridge CFDictionaryRef)properties);
     if (!CGImageDestinationFinalize(destination))
     {
@@ -211,10 +212,10 @@ NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
     };
     
     //create data
-    NSMutableData *data = [NSMutableData dataWithLength:footer.imageSize + footer.maskSize + footer.footerSize];
-    memcpy(data.mutableBytes, CFDataGetBytePtr(imageData), footer.imageSize);
-    memcpy((uint8_t *)data.mutableBytes + footer.imageSize, CFDataGetBytePtr(maskData), footer.maskSize);
-    memcpy((uint8_t *)data.mutableBytes + footer.imageSize + footer.maskSize, &footer, footer.footerSize);
+    NSMutableData *data = [NSMutableData dataWithCapacity:footer.imageSize + footer.maskSize + footer.footerSize];
+    [data appendBytes:CFDataGetBytePtr(imageData) length:footer.imageSize];
+    [data appendBytes:CFDataGetBytePtr(maskData) length:footer.maskSize];
+    [data appendBytes:&footer length:footer.footerSize];
     CFRelease(imageData);
     CFRelease(maskData);
     return data;
