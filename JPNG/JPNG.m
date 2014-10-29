@@ -1,7 +1,7 @@
 //
 //  JPNG.m
 //
-//  Version 1.2
+//  Version 1.2.1
 //
 //  Created by Nick Lockwood on 05/01/2013.
 //  Copyright 2013 Charcoal Design
@@ -41,8 +41,18 @@
 #import <objc/message.h>
 
 
+#import <Availability.h>
 #if !__has_feature(objc_arc)
 #error This library requires automatic reference counting
+#endif
+
+
+#if TARGET_OS_IPHONE
+#define kUTTypeJPEG CFSTR("public.jpeg")
+#define kUTTypePNG CFSTR("public.png")
+#define CLEAR_COLOR [UIColor clearColor].CGColor
+#else
+#define CLEAR_COLOR CGColorGetConstantColor(kCGColorClear)
 #endif
 
 
@@ -138,20 +148,11 @@ NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
     image = CGBitmapContextCreateImage(context);
     CGContextRelease(context);
     
-#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
-    
-    //get image jpeg data
-    UIImage *uiimage = [UIImage imageWithCGImage:image];
-    CFDataRef imageData = (__bridge CFDataRef)UIImageJPEGRepresentation(uiimage, quality);
-    CGImageRelease(image);
-    
-#else
-    
     //get image jpeg data
     CFMutableDataRef imageData = CFDataCreateMutable(NULL, 0);
     CGImageDestinationRef destination = CGImageDestinationCreateWithData(imageData, kUTTypeJPEG, 1, NULL);
     NSDictionary *properties = @{(__bridge id)kCGImageDestinationLossyCompressionQuality: @(quality),
-                                 (__bridge id)kCGImageDestinationBackgroundColor: (__bridge id)CGColorGetConstantColor(kCGColorClear)};
+                                 (__bridge id)kCGImageDestinationBackgroundColor: (__bridge id)CLEAR_COLOR};
     CGImageDestinationAddImage(destination, image, (__bridge CFDictionaryRef)properties);
     if (!CGImageDestinationFinalize(destination))
     {
@@ -160,9 +161,7 @@ NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
     }
     CFRelease(destination);
     CGImageRelease(image);
-    
-#endif
-    
+
     //get mask image
     colorSpace = CGColorSpaceCreateDeviceGray();
     context = CGBitmapContextCreate(alphaData, width, height, 8, width, colorSpace, (CGBitmapInfo)0);
@@ -170,15 +169,6 @@ NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
     CGContextRelease(context);
     CGColorSpaceRelease(colorSpace);
     free(alphaData);
-    
-#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
-    
-    //get mask png data
-    UIImage *uimask = [UIImage imageWithCGImage:mask];
-    CFDataRef maskData = (__bridge CFDataRef)UIImagePNGRepresentation(uimask);
-    CGImageRelease(mask);
-    
-#else
     
     //get mask png data
     CFMutableDataRef maskData = CFDataCreateMutable(NULL, 0);
@@ -191,9 +181,7 @@ NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
     }
     CFRelease(destination);
     CGImageRelease(mask);
-    
-#endif
-    
+
     //check for success
     if (!imageData || !maskData)
     {
@@ -222,8 +210,7 @@ NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
 }
 
 
-#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
-#import <UIKit/UIKit.h>
+#if TARGET_OS_IPHONE
 
 
 //iOS implementation
@@ -238,12 +225,11 @@ UIImage *UIImageWithJPNGData(NSData *data, CGFloat scale, UIImageOrientation ori
 
 NSData *UIImageJPNGRepresentation(UIImage *image, CGFloat quality)
 {
-    return CGImageJPNGRepresentation([image CGImage], quality);
+    return CGImageJPNGRepresentation(image.CGImage, quality);
 }
 
 
 #else
-#import <AppKit/AppKit.h>
 
 
 //Mac OS implementation
@@ -323,7 +309,7 @@ void JPNG_getNormalizedFile(NSString **path, CGFloat *scale)
         //generate suffixes
         NSArray *suffixes = @[[@"." stringByAppendingString:extension]];
         
-#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
+#if TARGET_OS_IPHONE
         
         //get device suffix
         NSString *deviceSuffix = (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone)? @"~iphone": @"~ipad";
@@ -371,7 +357,7 @@ void JPNG_getNormalizedFile(NSString **path, CGFloat *scale)
 }
 
 
-#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
+#if TARGET_OS_IPHONE
 
 
 @implementation UIImage (JPNG)

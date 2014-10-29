@@ -43,7 +43,7 @@ int main(int argc, const char * argv[])
             NSLog(@"JPNGTool arguments: inputfile [outputfile] [quality]");
             return 0;
         }
-        
+
         //input file
         NSString *inputFile = [NSString stringWithCString:argv[1] encoding:NSUTF8StringEncoding];
         if (![[NSFileManager defaultManager] fileExistsAtPath:inputFile])

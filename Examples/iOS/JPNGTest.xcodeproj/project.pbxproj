@@ -19,6 +19,7 @@
 		0152EE3716A74D7D00E3BB8E /* JPNG.m in Sources */ = {isa = PBXBuildFile; fileRef = 0152EE3616A74D7D00E3BB8E /* JPNG.m */; };
 		0152EE3D16A7519000E3BB8E /* Lake.jpng in Resources */ = {isa = PBXBuildFile; fileRef = 0152EE3B16A7519000E3BB8E /* Lake.jpng */; };
 		0152EE3E16A7519000E3BB8E /* Lake@2x.jpng in Resources */ = {isa = PBXBuildFile; fileRef = 0152EE3C16A7519000E3BB8E /* Lake@2x.jpng */; };
+		015589E61A01A40100083EB1 /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 015589E51A01A40100083EB1 /* ImageIO.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -40,6 +41,7 @@
 		0152EE3616A74D7D00E3BB8E /* JPNG.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JPNG.m; sourceTree = "<group>"; };
 		0152EE3B16A7519000E3BB8E /* Lake.jpng */ = {isa = PBXFileReference; lastKnownFileType = file; name = Lake.jpng; path = ../../Images/Lake.jpng; sourceTree = "<group>"; };
 		0152EE3C16A7519000E3BB8E /* Lake@2x.jpng */ = {isa = PBXFileReference; lastKnownFileType = file; name = "Lake@2x.jpng"; path = "../../Images/Lake@2x.jpng"; sourceTree = "<group>"; };
+		015589E51A01A40100083EB1 /* ImageIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ImageIO.framework; path = System/Library/Frameworks/ImageIO.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -47,6 +49,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				015589E61A01A40100083EB1 /* ImageIO.framework in Frameworks */,
 				0152EE0E16A74D5A00E3BB8E /* UIKit.framework in Frameworks */,
 				0152EE1016A74D5A00E3BB8E /* Foundation.framework in Frameworks */,
 				0152EE1216A74D5A00E3BB8E /* CoreGraphics.framework in Frameworks */,
@@ -77,6 +80,7 @@
 		0152EE0C16A74D5A00E3BB8E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				015589E51A01A40100083EB1 /* ImageIO.framework */,
 				0152EE0D16A74D5A00E3BB8E /* UIKit.framework */,
 				0152EE0F16A74D5A00E3BB8E /* Foundation.framework */,
 				0152EE1116A74D5A00E3BB8E /* CoreGraphics.framework */,

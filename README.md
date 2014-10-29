@@ -11,7 +11,7 @@ The JPNG library provides functions for creating and loading files in the JPNG f
 Supported OS & SDK Versions
 -----------------------------
 
-* Supported build target - iOS 7.0 / Mac OS 10.9 (Xcode 5.0, Apple LLVM compiler 5.0)
+* Supported build target - iOS 8.1 / Mac OS 10.10 (Xcode 6.1, Apple LLVM compiler 6.0)
 * Earliest supported deployment target - iOS 5.0 / Mac OS 10.7
 * Earliest compatible deployment target - iOS 4.3 / Mac OS 10.6 (64 bit)
 
@@ -35,7 +35,7 @@ It is safe to load JPNG instances on a background thread, and to use them on a t
 Installation
 ---------------
 
-To use JPNG, just drag the class files into your project. JPNG will automatically extend UIImage or NSImage with the ability to load JPNG images without you needing to explictly import the JPNG header into any of your classes, but if you have disabled swizzling, or wish to save images in JPNG format, just import the JPNG.h file to access these features.
+To use JPNG, just drag the class files into your project and add the ImageIO framework in the Build Phases tab. JPNG will automatically extend UIImage or NSImage with the ability to load JPNG images without you needing to explictly import the JPNG header into any of your classes, but if you have disabled swizzling, or wish to save images in JPNG format, just import the JPNG.h file to access these features.
 
 
 Cross-platform functions
@@ -197,3 +197,47 @@ The examples folder includes a benchmarking tool to compare PNG vs JPNG performa
 2. Build in release mode, not debug
 3. Disconnect from the debugger / Xcode
 4. Kill the app and re-run a few times to verify
+
+
+Release notes
+--------------------
+
+Version 1.2.1
+
+- Eliminated white border artifacts on the sides of transparent areas when creating the JPEG data
+- JPNG now requires the ImageIO framework to be included on iOS
+
+Version 1.2
+
+- JPNG images are no longer decompressed automatically in most cases, bringing performance in line with ordinary PNGs (see README for details)
+- Added forceDecompression option to CGImageCreateWithJPNGData()
+- Added JPNG_ALWAYS_FORCE_DECOMPRESSION global setting
+- Now complies with -Weverything warning level
+
+Version 1.1.3
+
+- Fixed memory leak when creating image
+- Fixed color shift issue with JPNGTool
+- Improved thread safety for +imageNamed: methods
+- Now flushes image cache on iOS in the event of a low memory warning
+
+Version 1.1.2
+
+- Now supports stricter compiler warning settings
+- JPNGTool now creates the output file directory if it doesn't already exist
+
+Version 1.1.1
+
+- JPNG images are now compatible with the GLKit texture loader
+- Fixed a bug in the image file suffix handling logic
+- Now complies with -Wextra warning level
+
+Version 1.1
+
+- Swizzling now works for all image loading methods on Mac and iOS
+- Fixed error when not using StandardPaths
+- Added test projects
+
+Version 1.0
+
+- Initial release

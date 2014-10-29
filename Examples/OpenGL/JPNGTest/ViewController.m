@@ -37,7 +37,6 @@
     GLKTextureInfo *texture = [GLKTextureLoader textureWithCGImage:image.CGImage options:nil error:&error];
     if (texture)
     {
-        self.effect.texture2d0.envMode = GLKTextureEnvModeReplace;
         self.effect.texture2d0.target = GLKTextureTarget2D;
         self.effect.texture2d0.name = texture.name;
     }
@@ -54,8 +53,12 @@
     
     //clear the screen
     glClear(GL_COLOR_BUFFER_BIT);
-    glClearColor(0.0, 0.0, 0.0, 1.0);
+    glClearColor(0.7, 0.7, 0.7, 1.0);
     
+    //enable blending
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
+
     //set up vertices
     GLKVector3 vertices[] =
     {

@@ -19,6 +19,9 @@
 		0152EE3716A74D7D00E3BB8E /* JPNG.m in Sources */ = {isa = PBXBuildFile; fileRef = 0152EE3616A74D7D00E3BB8E /* JPNG.m */; };
 		0152EE3D16A7519000E3BB8E /* Lake.jpng in Resources */ = {isa = PBXBuildFile; fileRef = 0152EE3B16A7519000E3BB8E /* Lake.jpng */; };
 		0152EE3E16A7519000E3BB8E /* Lake@2x.jpng in Resources */ = {isa = PBXBuildFile; fileRef = 0152EE3C16A7519000E3BB8E /* Lake@2x.jpng */; };
+		01558A221A01AF9700083EB1 /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 01558A211A01AF9700083EB1 /* ImageIO.framework */; };
+		01558A251A01B03300083EB1 /* Lake.png in Resources */ = {isa = PBXBuildFile; fileRef = 01558A231A01B03300083EB1 /* Lake.png */; };
+		01558A261A01B03300083EB1 /* Lake@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 01558A241A01B03300083EB1 /* Lake@2x.png */; };
 		01C7312A182594DF000B2CBC /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 01C73129182594DF000B2CBC /* OpenGLES.framework */; };
 /* End PBXBuildFile section */
 
@@ -41,6 +44,9 @@
 		0152EE3616A74D7D00E3BB8E /* JPNG.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JPNG.m; sourceTree = "<group>"; };
 		0152EE3B16A7519000E3BB8E /* Lake.jpng */ = {isa = PBXFileReference; lastKnownFileType = file; name = Lake.jpng; path = ../../Images/Lake.jpng; sourceTree = "<group>"; };
 		0152EE3C16A7519000E3BB8E /* Lake@2x.jpng */ = {isa = PBXFileReference; lastKnownFileType = file; name = "Lake@2x.jpng"; path = "../../Images/Lake@2x.jpng"; sourceTree = "<group>"; };
+		01558A211A01AF9700083EB1 /* ImageIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ImageIO.framework; path = System/Library/Frameworks/ImageIO.framework; sourceTree = SDKROOT; };
+		01558A231A01B03300083EB1 /* Lake.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Lake.png; path = ../../Images/Lake.png; sourceTree = "<group>"; };
+		01558A241A01B03300083EB1 /* Lake@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "Lake@2x.png"; path = "../../Images/Lake@2x.png"; sourceTree = "<group>"; };
 		01C73129182594DF000B2CBC /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -49,6 +55,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				01558A221A01AF9700083EB1 /* ImageIO.framework in Frameworks */,
 				01C7312A182594DF000B2CBC /* OpenGLES.framework in Frameworks */,
 				010190C118258FDA00A7F3CF /* GLKit.framework in Frameworks */,
 				0152EE0E16A74D5A00E3BB8E /* UIKit.framework in Frameworks */,
@@ -81,6 +88,7 @@
 		0152EE0C16A74D5A00E3BB8E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				01558A211A01AF9700083EB1 /* ImageIO.framework */,
 				01C73129182594DF000B2CBC /* OpenGLES.framework */,
 				010190C018258FDA00A7F3CF /* GLKit.framework */,
 				0152EE0D16A74D5A00E3BB8E /* UIKit.framework */,
@@ -105,6 +113,8 @@
 		0152EE1416A74D5A00E3BB8E /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				01558A231A01B03300083EB1 /* Lake.png */,
+				01558A241A01B03300083EB1 /* Lake@2x.png */,
 				0152EE3B16A7519000E3BB8E /* Lake.jpng */,
 				0152EE3C16A7519000E3BB8E /* Lake@2x.jpng */,
 				0152EE1516A74D5A00E3BB8E /* JPNGTest-Info.plist */,
@@ -179,6 +189,8 @@
 			files = (
 				0152EE1816A74D5A00E3BB8E /* InfoPlist.strings in Resources */,
 				0152EE2416A74D5A00E3BB8E /* Default-568h@2x.png in Resources */,
+				01558A251A01B03300083EB1 /* Lake.png in Resources */,
+				01558A261A01B03300083EB1 /* Lake@2x.png in Resources */,
 				0152EE3D16A7519000E3BB8E /* Lake.jpng in Resources */,
 				0152EE3E16A7519000E3BB8E /* Lake@2x.jpng in Resources */,
 			);

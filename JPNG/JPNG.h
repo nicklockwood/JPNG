@@ -1,7 +1,7 @@
 //
 //  JPNG.h
 //
-//  Version 1.2
+//  Version 1.2.1
 //
 //  Created by Nick Lockwood on 05/01/2013.
 //  Copyright 2013 Charcoal Design
@@ -31,7 +31,9 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <Availability.h>
+#import <CoreGraphics/CoreGraphics.h>
+#import <TargetConditionals.h>
+#import <ImageIO/ImageIO.h>
 
 
 #ifndef JPNG_SWIZZLE_ENABLED
@@ -65,7 +67,7 @@ CGImageRef CGImageCreateWithJPNGData(NSData *data, BOOL forceDecompression);
 NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality);
 
 
-#ifdef __IPHONE_OS_VERSION_MIN_REQUIRED
+#if TARGET_OS_IPHONE
 #import <UIKit/UIKit.h>
 
 

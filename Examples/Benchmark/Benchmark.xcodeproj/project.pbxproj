@@ -21,6 +21,7 @@
 		01226C9018356E9A009A980F /* 64x64.png in Resources */ = {isa = PBXBuildFile; fileRef = 01226C8418356E9A009A980F /* 64x64.png */; };
 		01226C9418356EE7009A980F /* JPNG.m in Sources */ = {isa = PBXBuildFile; fileRef = 01226C9318356EE7009A980F /* JPNG.m */; };
 		01226C9818357083009A980F /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 01226C9718357083009A980F /* Default-568h@2x.png */; };
+		01558A201A01AF4800083EB1 /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 01558A1F1A01AF4800083EB1 /* ImageIO.framework */; };
 		019D9CA417189278000E8594 /* ViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 019D9CA317189278000E8594 /* ViewController.xib */; };
 		01DFB6C116CC4CDE006A7A9F /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 01DFB6B716CC4CDE006A7A9F /* AppDelegate.m */; };
 		01DFB6C616CC4CDE006A7A9F /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 01DFB6BD16CC4CDE006A7A9F /* main.m */; };
@@ -46,6 +47,7 @@
 		01226C9218356EE7009A980F /* JPNG.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JPNG.h; sourceTree = "<group>"; };
 		01226C9318356EE7009A980F /* JPNG.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = JPNG.m; sourceTree = "<group>"; };
 		01226C9718357083009A980F /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
+		01558A1F1A01AF4800083EB1 /* ImageIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ImageIO.framework; path = System/Library/Frameworks/ImageIO.framework; sourceTree = SDKROOT; };
 		019D9CA317189278000E8594 /* ViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ViewController.xib; sourceTree = "<group>"; };
 		01DFB6B616CC4CDE006A7A9F /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		01DFB6B716CC4CDE006A7A9F /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -65,6 +67,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				01558A201A01AF4800083EB1 /* ImageIO.framework in Frameworks */,
 				01F7243216BEBAF400DB1F0E /* UIKit.framework in Frameworks */,
 				01F7243416BEBAF400DB1F0E /* Foundation.framework in Frameworks */,
 				01F7243616BEBAF400DB1F0E /* CoreGraphics.framework in Frameworks */,
@@ -149,6 +152,7 @@
 		01F7243016BEBAF400DB1F0E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				01558A1F1A01AF4800083EB1 /* ImageIO.framework */,
 				01F7243116BEBAF400DB1F0E /* UIKit.framework */,
 				01F7243316BEBAF400DB1F0E /* Foundation.framework */,
 				01F7243516BEBAF400DB1F0E /* CoreGraphics.framework */,
