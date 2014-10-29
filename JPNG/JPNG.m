@@ -150,7 +150,8 @@ NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
     //get image jpeg data
     CFMutableDataRef imageData = CFDataCreateMutable(NULL, 0);
     CGImageDestinationRef destination = CGImageDestinationCreateWithData(imageData, kUTTypeJPEG, 1, NULL);
-    NSDictionary *properties = @{(__bridge id)kCGImageDestinationLossyCompressionQuality: @(quality)};
+    NSDictionary *properties = @{(__bridge id)kCGImageDestinationLossyCompressionQuality: @(quality),
+                                 (__bridge id)kCGImageDestinationBackgroundColor: (__bridge id)CGColorGetConstantColor(kCGColorClear)};
     CGImageDestinationAddImage(destination, image, (__bridge CFDictionaryRef)properties);
     if (!CGImageDestinationFinalize(destination))
     {
