@@ -65,6 +65,7 @@ JPNGFooter;
 
 CGImageRef CGImageCreateWithJPNGData(NSData *data, BOOL forceDecompression);
 NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality);
+NSData *CGImagePNGOfAlpha( CGImageRef image);
 
 
 #if TARGET_OS_IPHONE
@@ -85,6 +86,14 @@ NSData *UIImageJPNGRepresentation(UIImage *image, CGFloat quality);
 
 NSImage *NSImageWithJPNGData(NSData *data, CGFloat scale);
 NSData *NSImageJPNGRepresentation(NSImage *image, CGFloat quality);
+
+@interface NSBitmapImageRep(PNGOfAlpha)
+
+-(NSData *)JPNGRepresentationWithQuality:(CGFloat)quality;
+-(NSData *)PNGOfAlpha;
+
+@end
+
 
 
 #endif

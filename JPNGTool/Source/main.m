@@ -33,9 +33,11 @@
 #import <AppKit/AppKit.h>
 #import "JPNG.h"
 
+#define EXTRACT_ALPHA 1
 
 int main(int argc, const char * argv[])
 {
+    NSString *outputExtension= EXTRACT_ALPHA ? @"maskpng" : @"jpng";
     @autoreleasepool
     {
         if (argc == 1)
@@ -51,9 +53,13 @@ int main(int argc, const char * argv[])
             NSLog(@"Input file '%@' does not exist", inputFile);
             return 0;
         }
+        NSLog(@"Will convert '%@' to JPNG", inputFile);
         
         //output file
-        NSString *outputFile = [[inputFile stringByDeletingPathExtension] stringByAppendingPathExtension:@"jpng"];
+        
+        
+        
+        NSString *outputFile = [[inputFile stringByDeletingPathExtension] stringByAppendingPathExtension:outputExtension];
         if (argc > 2)
         {
             outputFile = [NSString stringWithCString:argv[2] encoding:NSUTF8StringEncoding];
@@ -81,11 +87,11 @@ int main(int argc, const char * argv[])
         }
         
         //load image
-        NSImage *image = [[NSImage alloc] initWithContentsOfFile:inputFile];        
+        NSBitmapImageRep *image = [[NSBitmapImageRep alloc] initWithData:[NSData dataWithContentsOfMappedFile:inputFile]];
         if (image)
         {
-            //save as JPNG
-            NSData *data = NSImageJPNGRepresentation(image, quality);
+            //save as JPNG or PNG of alpha
+            NSData *data = EXTRACT_ALPHA ? [image PNGOfAlpha] : [image JPNGRepresentationWithQuality:quality];
             if (!data)
             {
                 NSLog(@"Failed to convert '%@' to JPNG", inputFile);

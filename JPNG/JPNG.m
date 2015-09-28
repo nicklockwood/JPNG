@@ -55,6 +55,7 @@
 #define CLEAR_COLOR CGColorGetConstantColor(kCGColorClear)
 #endif
 
+#define JPNG_DEFAULT_VERSION 2
 
 //cross-platform implementation
 
@@ -76,7 +77,7 @@ CGImageRef CGImageCreateWithJPNGData(NSData *data, BOOL forceDecompression)
         return NULL;
     }
     
-    if (footer.majorVersion > 1)
+    if (footer.majorVersion > 2)
     {
         //not compatible
         NSLog(@"This version of the JPNG library doesn't support JPNG version %i files", footer.majorVersion);
@@ -92,7 +93,10 @@ CGImageRef CGImageCreateWithJPNGData(NSData *data, BOOL forceDecompression)
     //load mask data
     range = NSMakeRange(footer.imageSize, footer.maskSize);
     dataProvider = CGDataProviderCreateWithCFData((__bridge CFDataRef)[data subdataWithRange:range]);
-    CGImageRef mask = CGImageCreateWithPNGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault);
+    CGImageRef mask =
+    footer.majorVersion == 2 ?
+        CGImageCreateWithJPEGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault) :
+        CGImageCreateWithPNGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault);
     CGDataProviderRelease(dataProvider);
 
     if (forceDecompression)
@@ -122,13 +126,51 @@ CGImageRef CGImageCreateWithJPNGData(NSData *data, BOOL forceDecompression)
     }
 }
 
-NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
+NSData *CGImagePNGOfAlpha( CGImageRef image)
+{
+    size_t width = CGImageGetWidth(image);
+    size_t height = CGImageGetHeight(image);
+    CFDataRef pixelData = CGDataProviderCopyData(CGImageGetDataProvider(image));
+    uint8_t *colorData = (uint8_t *)CFDataGetMutableBytePtr( (CFMutableDataRef)pixelData);
+    uint8_t *alphaData = (uint8_t *)malloc(width * height);
+    for (size_t i = 0; i < height; i++)
+    {
+        for (size_t j = 0; j < width; j++)
+        {
+            size_t index = i * width + j;
+            alphaData[index] = colorData[index * 4 + 3];
+        }
+    }
+    CFRelease(pixelData);
+
+    //get mask image
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
+    CGContextRef context = CGBitmapContextCreate(alphaData, width, height, 8, width, colorSpace, (CGBitmapInfo)0);
+    CGImageRef mask = CGBitmapContextCreateImage(context);
+    CGContextRelease(context);
+    CGColorSpaceRelease(colorSpace);
+    free(alphaData);
+
+    CFMutableDataRef maskData = CFDataCreateMutable(NULL, 0);
+    CGImageDestinationRef destination = CGImageDestinationCreateWithData(maskData, kUTTypePNG, 1, NULL);
+    CGImageDestinationAddImage(destination, mask, nil);
+    CGImageDestinationFinalize(destination);
+    CGImageRelease(mask);
+    if (destination) {
+        CFRelease(destination);
+    }
+    
+    NSData *resultData =(NSData*)CFBridgingRelease(maskData);
+    return resultData;
+}
+
+NSData *CGImageJPNGRepresentationWithVersion(CGImageRef image, CGFloat quality, int version)
 {
     //split image and mask data
     size_t width = CGImageGetWidth(image);
     size_t height = CGImageGetHeight(image);
     CFDataRef pixelData = CGDataProviderCopyData(CGImageGetDataProvider(image));
-    uint8_t *colorData = (uint8_t *)CFDataGetBytePtr(pixelData);
+    uint8_t *colorData = (uint8_t *)CFDataGetMutableBytePtr( (CFMutableDataRef)pixelData);
     uint8_t *alphaData = (uint8_t *)malloc(width * height);
     for (size_t i = 0; i < height; i++)
     {
@@ -172,8 +214,10 @@ NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
     
     //get mask png data
     CFMutableDataRef maskData = CFDataCreateMutable(NULL, 0);
-    destination = CGImageDestinationCreateWithData(maskData, kUTTypePNG, 1, NULL);
-    CGImageDestinationAddImage(destination, mask, nil);
+    destination = CGImageDestinationCreateWithData(maskData, version==2 ? kUTTypeJPEG : kUTTypePNG, 1, NULL);
+    NSDictionary *maskProperties = @{(__bridge id)kCGImageDestinationLossyCompressionQuality: @(quality),
+                                 (__bridge id)kCGImageDestinationBackgroundColor: (__bridge id)CLEAR_COLOR};
+    CGImageDestinationAddImage(destination, mask, (__bridge CFDictionaryRef)maskProperties);
     if (!CGImageDestinationFinalize(destination))
     {
         CFRelease(maskData);
@@ -196,7 +240,7 @@ NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
         (uint32_t)CFDataGetLength(imageData),
         (uint32_t)CFDataGetLength(maskData),
         (uint16_t)sizeof(JPNGFooter),
-        1, 0, JPNGIdentifier
+        version, 0, JPNGIdentifier
     };
     
     //create data
@@ -208,6 +252,13 @@ NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
     CFRelease(maskData);
     return data;
 }
+
+NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
+{
+    return CGImageJPNGRepresentationWithVersion(image, quality, JPNG_DEFAULT_VERSION );
+}
+
+
 
 
 #if TARGET_OS_IPHONE
@@ -262,6 +313,25 @@ NSData *NSImageJPNGRepresentation(NSImage *image, CGFloat quality)
     CGImageRef imageRef = [image CGImageForProposedRect:&rect context:NULL hints:nil];
     return CGImageJPNGRepresentation(imageRef, quality);
 }
+
+@implementation NSBitmapImageRep(PNGOfAlpha)
+
+-(NSData*)JPNGRepresentationWithQuality:(CGFloat)quality
+{
+    return CGImageJPNGRepresentation([self CGImage], quality);
+}
+
+
+-(NSData *)PNGOfAlpha
+{
+    [self bitmapData];
+    return CGImagePNGOfAlpha( [self CGImage]);
+}
+
+
+@end
+
+
 
 
 #endif
