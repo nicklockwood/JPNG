@@ -1,10 +1,11 @@
 //
 //  JPNG.m
 //
-//  Version 1.2.1
+//  Version 1.3
 //
 //  Created by Nick Lockwood on 05/01/2013.
 //  Copyright 2013 Charcoal Design
+//  Updatded with v2 file format support by Marcel Weiher Sep 29 2015
 //
 //  Distributed under the permissive zlib license
 //  Get the latest version from here:
@@ -61,7 +62,37 @@
 
 uint32_t JPNGIdentifier = 'JPNG';
 
-CGImageRef CGImageCreateWithJPNGData(NSData *data, BOOL forceDecompression)
+
+CGImageRef CGImageCreateImageFromDataWithTargetSize( NSData *data, CGSize targetSize, BOOL isPNG  )
+{
+    CGImageRef image=nil;
+    CGDataProviderRef dataProvider = CGDataProviderCreateWithCFData((__bridge CFDataRef)data);
+    if ( targetSize.width > 0 ) {
+        int pixelMaxSize = MAX( targetSize.width, targetSize.height);
+        CGImageSourceRef source = CGImageSourceCreateWithDataProvider( dataProvider, nil);
+        if ( source ) {
+            NSDictionary* thumbOpts = [NSDictionary dictionaryWithObjectsAndKeys:
+                                       (id) kCFBooleanTrue, (id)kCGImageSourceCreateThumbnailWithTransform,
+                                       (id)kCFBooleanTrue, (id)kCGImageSourceCreateThumbnailFromImageIfAbsent,
+                                       [NSNumber numberWithInt:pixelMaxSize],  kCGImageSourceThumbnailMaxPixelSize,
+                                       nil];
+            
+            image = CGImageSourceCreateThumbnailAtIndex(source, 0, (CFDictionaryRef)thumbOpts);
+            CFRelease(source);
+        }
+    } else {
+        if (isPNG) {
+            image = CGImageCreateWithPNGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault);
+        } else {
+            image = CGImageCreateWithJPEGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault);
+        }
+        
+    }
+    CGDataProviderRelease(dataProvider);
+    return image;
+}
+
+static NSData *extractJPNGComponent( NSData *data, BOOL wantMask , int *version )
 {
     if ([data length] <= sizeof(JPNGFooter))
     {
@@ -83,27 +114,30 @@ CGImageRef CGImageCreateWithJPNGData(NSData *data, BOOL forceDecompression)
         NSLog(@"This version of the JPNG library doesn't support JPNG version %i files", footer.majorVersion);
         return NULL;
     }
+    NSRange subRange = wantMask ? NSMakeRange(footer.imageSize, footer.maskSize) : NSMakeRange(0, footer.imageSize);
+    if ( version ) {
+        *version=footer.majorVersion;
+    }
+        
+        
+    return [data subdataWithRange:subRange];
+}
+
+
+CGImageRef CGImageCreateWithJPNGData(NSData *data, CGSize targetSize, BOOL forceDecompression)
+{
     
     //load image data
-    NSRange range = NSMakeRange(0, footer.imageSize);
-    CGDataProviderRef dataProvider = CGDataProviderCreateWithCFData((__bridge CFDataRef)[data subdataWithRange:range]);
-    CGImageRef image = CGImageCreateWithJPEGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault);
-    CGDataProviderRelease(dataProvider);
+    int version=0;
+    CGImageRef image=CGImageCreateImageFromDataWithTargetSize( extractJPNGComponent( data, NO , &version ),  targetSize , NO );
+    CGImageRef mask =CGImageCreateImageFromDataWithTargetSize( extractJPNGComponent( data, YES , &version), targetSize ,version == 2 );
     
-    //load mask data
-    range = NSMakeRange(footer.imageSize, footer.maskSize);
-    dataProvider = CGDataProviderCreateWithCFData((__bridge CFDataRef)[data subdataWithRange:range]);
-    CGImageRef mask =
-    footer.majorVersion == 2 ?
-        CGImageCreateWithJPEGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault) :
-        CGImageCreateWithPNGDataProvider(dataProvider, NULL, true, kCGRenderingIntentDefault);
-    CGDataProviderRelease(dataProvider);
-
+    
     if (forceDecompression)
     {
         //draw image into optimized image context
-        size_t width = CGImageGetWidth(image);
-        size_t height = CGImageGetHeight(image);
+        size_t width = targetSize.width >0 ? targetSize.width :  CGImageGetWidth(image);
+        size_t height = targetSize.height >0 ? targetSize.height : CGImageGetHeight(image);
         CGColorSpaceRef colorSpace = CGImageGetColorSpace(image);
         CGBitmapInfo bitmapInfo = (CGBitmapInfo)(kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
         CGContextRef context = CGBitmapContextCreate(NULL, width, height, 8, width * 4, colorSpace, bitmapInfo);
@@ -118,7 +152,7 @@ CGImageRef CGImageCreateWithJPNGData(NSData *data, BOOL forceDecompression)
     }
     else
     {
-        //return still-compressed image
+        //return still-compressed image  (this doesn't enforce the size passed)
         CGImageRef result = CGImageCreateWithMask(image, mask);
         CGImageRelease(image);
         CGImageRelease(mask);
@@ -130,6 +164,8 @@ NSData *CGImagePNGOfAlpha( CGImageRef image)
 {
     size_t width = CGImageGetWidth(image);
     size_t height = CGImageGetHeight(image);
+    
+
     CFDataRef pixelData = CGDataProviderCopyData(CGImageGetDataProvider(image));
     uint8_t *colorData = (uint8_t *)CFDataGetMutableBytePtr( (CFMutableDataRef)pixelData);
     uint8_t *alphaData = (uint8_t *)malloc(width * height);
@@ -138,6 +174,7 @@ NSData *CGImagePNGOfAlpha( CGImageRef image)
         for (size_t j = 0; j < width; j++)
         {
             size_t index = i * width + j;
+            // FIXME:  image might not have had 4 channels, alpha might not be last
             alphaData[index] = colorData[index * 4 + 3];
         }
     }
@@ -169,15 +206,20 @@ NSData *CGImageJPNGRepresentationWithVersion(CGImageRef image, CGFloat quality, 
     //split image and mask data
     size_t width = CGImageGetWidth(image);
     size_t height = CGImageGetHeight(image);
+    size_t bitsPerPixel = CGImageGetBitsPerPixel(image);
+    size_t bitsPerSample = CGImageGetBitsPerComponent(image);
+    size_t numSamples = bitsPerPixel / bitsPerSample;
     CFDataRef pixelData = CGDataProviderCopyData(CGImageGetDataProvider(image));
+    int    alphaOffset = 3;
     uint8_t *colorData = (uint8_t *)CFDataGetMutableBytePtr( (CFMutableDataRef)pixelData);
     uint8_t *alphaData = (uint8_t *)malloc(width * height);
+    
     for (size_t i = 0; i < height; i++)
     {
         for (size_t j = 0; j < width; j++)
         {
             size_t index = i * width + j;
-            alphaData[index] = colorData[index * 4 + 3];
+            alphaData[index] = colorData[index * numSamples + alphaOffset];
         }
     }
     CFRelease(pixelData);
@@ -266,12 +308,17 @@ NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
 
 //iOS implementation
 
-UIImage *UIImageWithJPNGData(NSData *data, CGFloat scale, UIImageOrientation orientation)
+UIImage *UIImageWithJPNGDataAtSize(NSData *data, CGSize targetSize , UIImageOrientation orientation)
 {
-    CGImageRef imageRef = CGImageCreateWithJPNGData(data, JPNG_ALWAYS_FORCE_DECOMPRESSION);
+    CGImageRef imageRef = CGImageCreateWithJPNGData(data, targetSize, JPNG_ALWAYS_FORCE_DECOMPRESSION);
     return [UIImage imageWithCGImage:(__bridge CGImageRef)CFBridgingRelease(imageRef)
                                scale:scale
                          orientation:orientation];
+}
+
+UIImage *UIImageWithJPNGData(NSData *data , UIImageOrientation orientation)
+{
+    return UIImageWithJPNGDataAtSize( data, CGSizeZero, orientation);
 }
 
 NSData *UIImageJPNGRepresentation(UIImage *image, CGFloat quality)
@@ -287,7 +334,7 @@ NSData *UIImageJPNGRepresentation(UIImage *image, CGFloat quality)
 
 NSImage *NSImageWithJPNGData(NSData *data, CGFloat scale)
 {
-    CGImageRef imageRef = CGImageCreateWithJPNGData(data, JPNG_ALWAYS_FORCE_DECOMPRESSION);
+    CGImageRef imageRef = CGImageCreateWithJPNGData(data, CGSizeZero, JPNG_ALWAYS_FORCE_DECOMPRESSION);
     if (imageRef)
     {
         scale = scale ?: [NSScreen mainScreen].backingScaleFactor;
@@ -533,7 +580,7 @@ void JPNG_getNormalizedFile(NSString **path, CGFloat *scale)
 
 - (id)JPNG_initWithData:(NSData *)data
 {
-    CGImageRef imageRef = CGImageCreateWithJPNGData(data, JPNG_ALWAYS_FORCE_DECOMPRESSION);
+    CGImageRef imageRef = CGImageCreateWithJPNGData(data, CGSizeZero, JPNG_ALWAYS_FORCE_DECOMPRESSION);
     if (imageRef)
     {
         NSSize size = NSMakeSize(CGImageGetWidth(imageRef), CGImageGetHeight(imageRef));
@@ -577,7 +624,7 @@ void JPNG_getNormalizedFile(NSString **path, CGFloat *scale)
             if (!image)
             {
                 NSData *data = [NSData dataWithContentsOfFile:path];
-                CGImageRef imageRef = CGImageCreateWithJPNGData(data, YES);
+                CGImageRef imageRef = CGImageCreateWithJPNGData(data, CGSizeZero, YES);
                 if (imageRef)
                 {
                     NSSize size = NSMakeSize(CGImageGetWidth(imageRef) / scale, CGImageGetHeight(imageRef) / scale);

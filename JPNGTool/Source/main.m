@@ -33,7 +33,7 @@
 #import <AppKit/AppKit.h>
 #import "JPNG.h"
 
-#define EXTRACT_ALPHA 1
+#define EXTRACT_ALPHA 0
 
 int main(int argc, const char * argv[])
 {
@@ -75,7 +75,7 @@ int main(int argc, const char * argv[])
         }
         
         //quality
-        float quality = 0.8f;
+        float quality = 0.5f;
         if (argc > 3)
         {
             quality = [[NSString stringWithCString:argv[3] encoding:NSUTF8StringEncoding] floatValue];
