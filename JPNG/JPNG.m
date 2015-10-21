@@ -63,7 +63,7 @@
 uint32_t JPNGIdentifier = 'JPNG';
 
 
-CGImageRef CGImageCreateImageFromDataWithTargetSize( NSData *data, CGSize targetSize, BOOL isPNG  )
+static CGImageRef CGImageCreateImageFromDataWithTargetSize( NSData *data, CGSize targetSize, BOOL isPNG  )
 {
     CGImageRef image=nil;
     CGDataProviderRef dataProvider = CGDataProviderCreateWithCFData((__bridge CFDataRef)data);
@@ -130,10 +130,15 @@ CGImageRef CGImageCreateWithJPNGData(NSData *data, CGSize targetSize, BOOL force
     //load image data
     int version=0;
     CGImageRef image=CGImageCreateImageFromDataWithTargetSize( extractJPNGComponent( data, NO , &version ),  targetSize , NO );
-    CGImageRef mask =CGImageCreateImageFromDataWithTargetSize( extractJPNGComponent( data, YES , &version), targetSize ,version == 2 );
+    CGImageRef mask =CGImageCreateImageFromDataWithTargetSize( extractJPNGComponent( data, YES ,NULL), targetSize ,version == 1 );
     
+    BOOL wantsSpecificSize = targetSize.width > 0;
+    BOOL isAlreadyDecompressed = wantsSpecificSize;     // observed behavior of CGImageSourceCreateThumbnailAtIndex()
+    BOOL sizeMatches = (fabs( CGImageGetWidth( image) - targetSize.width ) < 1.0);
+    BOOL needsToDecompress = forceDecompression && !isAlreadyDecompressed;
+    BOOL needsToResize = wantsSpecificSize && !sizeMatches;
     
-    if (forceDecompression)
+    if ( needsToDecompress || needsToResize )
     {
         //draw image into optimized image context
         size_t width = targetSize.width >0 ? targetSize.width :  CGImageGetWidth(image);
@@ -160,63 +165,24 @@ CGImageRef CGImageCreateWithJPNGData(NSData *data, CGSize targetSize, BOOL force
     }
 }
 
-NSData *CGImagePNGOfAlpha( CGImageRef image)
-{
-    size_t width = CGImageGetWidth(image);
-    size_t height = CGImageGetHeight(image);
-    
-
-    CFDataRef pixelData = CGDataProviderCopyData(CGImageGetDataProvider(image));
-    uint8_t *colorData = (uint8_t *)CFDataGetMutableBytePtr( (CFMutableDataRef)pixelData);
-    uint8_t *alphaData = (uint8_t *)malloc(width * height);
-    for (size_t i = 0; i < height; i++)
-    {
-        for (size_t j = 0; j < width; j++)
-        {
-            size_t index = i * width + j;
-            // FIXME:  image might not have had 4 channels, alpha might not be last
-            alphaData[index] = colorData[index * 4 + 3];
-        }
-    }
-    CFRelease(pixelData);
-
-    //get mask image
-    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
-    CGContextRef context = CGBitmapContextCreate(alphaData, width, height, 8, width, colorSpace, (CGBitmapInfo)0);
-    CGImageRef mask = CGBitmapContextCreateImage(context);
-    CGContextRelease(context);
-    CGColorSpaceRelease(colorSpace);
-    free(alphaData);
-
-    CFMutableDataRef maskData = CFDataCreateMutable(NULL, 0);
-    CGImageDestinationRef destination = CGImageDestinationCreateWithData(maskData, kUTTypePNG, 1, NULL);
-    CGImageDestinationAddImage(destination, mask, nil);
-    CGImageDestinationFinalize(destination);
-    CGImageRelease(mask);
-    if (destination) {
-        CFRelease(destination);
-    }
-    
-    NSData *resultData =(NSData*)CFBridgingRelease(maskData);
-    return resultData;
-}
 
 NSData *CGImageJPNGRepresentationWithVersion(CGImageRef image, CGFloat quality, int version)
 {
     //split image and mask data
-    size_t width = CGImageGetWidth(image);
-    size_t height = CGImageGetHeight(image);
-    size_t bitsPerPixel = CGImageGetBitsPerPixel(image);
-    size_t bitsPerSample = CGImageGetBitsPerComponent(image);
-    size_t numSamples = bitsPerPixel / bitsPerSample;
+    int width = (int)CGImageGetWidth(image);
+    int height = (int)CGImageGetHeight(image);
+    int bitsPerPixel = (int)CGImageGetBitsPerPixel(image);
+    int bitsPerSample = (int)CGImageGetBitsPerComponent(image);
+    int numSamples = bitsPerPixel / bitsPerSample;
     CFDataRef pixelData = CGDataProviderCopyData(CGImageGetDataProvider(image));
-    int    alphaOffset = 3;
+    int    alphaOffset = (int)numSamples - 1;
+//    NSLog(@"bitsPerPixel: %d bitsPerSample: %d numSamples: %d",bitsPerPixel,bitsPerSample,numSamples);
     uint8_t *colorData = (uint8_t *)CFDataGetMutableBytePtr( (CFMutableDataRef)pixelData);
     uint8_t *alphaData = (uint8_t *)malloc(width * height);
     
-    for (size_t i = 0; i < height; i++)
+    for (int i = 0; i < height; i++)
     {
-        for (size_t j = 0; j < width; j++)
+        for (int j = 0; j < width; j++)
         {
             size_t index = i * width + j;
             alphaData[index] = colorData[index * numSamples + alphaOffset];
@@ -371,8 +337,7 @@ NSData *NSImageJPNGRepresentation(NSImage *image, CGFloat quality)
 
 -(NSData *)PNGOfAlpha
 {
-    [self bitmapData];
-    return CGImagePNGOfAlpha( [self CGImage]);
+    return extractJPNGComponent([self JPNGRepresentationWithQuality:0.7], YES, NULL);
 }
 
 
