@@ -202,6 +202,13 @@ The examples folder includes a benchmarking tool to compare PNG vs JPNG performa
 Release notes
 --------------------
 
+Version 1.3
+
+- JPNG file format version 2 uses JPEG to compress the mask
+- Reads both versions
+- Version to write can be specified
+
+
 Version 1.2.1
 
 - Eliminated white border artifacts on the sides of transparent areas when creating the JPEG data

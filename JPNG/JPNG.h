@@ -1,7 +1,7 @@
 //
 //  JPNG.h
 //
-//  Version 1.2.1
+//  Version 1.3
 //
 //  Created by Nick Lockwood on 05/01/2013.
 //  Copyright 2013 Charcoal Design
@@ -63,8 +63,9 @@ JPNGFooter;
 
 //cross-platform implementation
 
-CGImageRef CGImageCreateWithJPNGData(NSData *data, BOOL forceDecompression);
+CGImageRef CGImageCreateWithJPNGData(NSData *data, CGSize targetSize,  BOOL forceDecompression);
 NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality);
+NSData *CGImagePNGOfAlpha( CGImageRef image);
 
 
 #if TARGET_OS_IPHONE
@@ -85,6 +86,14 @@ NSData *UIImageJPNGRepresentation(UIImage *image, CGFloat quality);
 
 NSImage *NSImageWithJPNGData(NSData *data, CGFloat scale);
 NSData *NSImageJPNGRepresentation(NSImage *image, CGFloat quality);
+
+@interface NSBitmapImageRep(PNGOfAlpha)
+
+-(NSData *)JPNGRepresentationWithQuality:(CGFloat)quality;
+-(NSData *)PNGOfAlpha;
+
+@end
+
 
 
 #endif
