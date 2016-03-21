@@ -11,8 +11,8 @@ The JPNG library provides functions for creating and loading files in the JPNG f
 Supported OS & SDK Versions
 -----------------------------
 
-* Supported build target - iOS 8.1 / Mac OS 10.10 (Xcode 6.1, Apple LLVM compiler 6.0)
-* Earliest supported deployment target - iOS 5.0 / Mac OS 10.7
+* Supported build target - iOS 9.2 / Mac OS 10.11 (Xcode 7.2.1, Apple LLVM compiler 7.0)
+* Earliest supported deployment target - iOS 7.0 / Mac OS 10.9
 * Earliest compatible deployment target - iOS 4.3 / Mac OS 10.6 (64 bit)
 
 NOTE: 'Supported' means that the library has been tested with this version. 'Compatible' means that the library should work on this OS version (i.e. it doesn't rely on any unavailable SDK features) but is no longer being tested for compatibility and may require tweaking or bug fixes to run correctly.
@@ -29,13 +29,13 @@ If you wish to convert your whole project to ARC, comment out the #error line in
 Thread Safety
 --------------
 
-It is safe to load JPNG instances on a background thread, and to use them on a thread other than the one on which they were created. It is safe to call the methods rentrantly/concurrently on different threads.
+It is safe to load JPNG instances on a background thread, and to use them on a thread other than the one on which they were created. It is safe to call the methods reentrantly/concurrently on different threads.
 
 
 Installation
 ---------------
 
-To use JPNG, just drag the class files into your project and add the ImageIO framework in the Build Phases tab. JPNG will automatically extend UIImage or NSImage with the ability to load JPNG images without you needing to explictly import the JPNG header into any of your classes, but if you have disabled swizzling, or wish to save images in JPNG format, just import the JPNG.h file to access these features.
+To use JPNG, just drag the class files into your project and add the ImageIO framework in the Build Phases tab. JPNG will automatically extend UIImage or NSImage with the ability to load JPNG images without you needing to explicitly import the JPNG header into any of your classes, but if you have disabled swizzling, or wish to save images in JPNG format, just import the JPNG.h file to access these features.
 
 
 Cross-platform functions
@@ -79,7 +79,7 @@ Decompression
 
 By default, iOS typically defers decompression of images until they are first drawn, and may discard the decompressed data when it is no longer needed. The only exception to this is if you load images using the [UIImage imageNamed:] method. This is good from a memory consumption standpoint, but reduces the performance of drawing images that are loaded using [UIImage imageWithContentsOfFile:], or equivalent.
 
-JPNG attempts to emulate this behaviour as closely as possible, so JPNG images loaded using the UIImageWithJPNGData(...) and NSImageWithJPNGData(...) methods return compressed images by default, and the swizzled iOS and AppKit image loading methods behave the same as their native counteprats.
+JPNG attempts to emulate this behaviour as closely as possible, so JPNG images loaded using the UIImageWithJPNGData(...) and NSImageWithJPNGData(...) methods return compressed images by default, and the swizzled iOS and AppKit image loading methods behave the same as their native counterparts.
 
 If you would prefer to force decompression for all images (to improve drawing performance at the expense of loading time and memory consumption), you can do so by adding the following pre-compiler macro to your build settings:
 
@@ -202,9 +202,14 @@ The examples folder includes a benchmarking tool to compare PNG vs JPNG performa
 Release notes
 --------------------
 
+Version 1.2.2
+
+- Fixed compiler errors / warnings on latest Xcode
+- Added support for 3x Retina (iPhone 6 Plus)
+
 Version 1.2.1
 
-- Eliminated white border artifacts on the sides of transparent areas when creating the JPEG data
+- Eliminated white border artefacts on the sides of transparent areas when creating the JPEG data
 - JPNG now requires the ImageIO framework to be included on iOS
 
 Version 1.2

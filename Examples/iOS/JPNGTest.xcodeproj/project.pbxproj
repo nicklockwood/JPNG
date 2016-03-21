@@ -67,7 +67,9 @@
 				0152EE0C16A74D5A00E3BB8E /* Frameworks */,
 				0152EE0A16A74D5A00E3BB8E /* Products */,
 			);
+			indentWidth = 4;
 			sourceTree = "<group>";
+			tabWidth = 4;
 		};
 		0152EE0A16A74D5A00E3BB8E /* Products */ = {
 			isa = PBXGroup;
@@ -151,7 +153,7 @@
 		0152EE0016A74D5A00E3BB8E /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0450;
+				LastUpgradeCheck = 0720;
 				ORGANIZATIONNAME = "Charcoal Design";
 			};
 			buildConfigurationList = 0152EE0316A74D5A00E3BB8E /* Build configuration list for PBXProject "JPNGTest" */;
@@ -248,6 +250,7 @@
 				CLANG_WARN__EXIT_TIME_DESTRUCTORS = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
+				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -363,6 +366,7 @@
 				GCC_PREFIX_HEADER = "JPNGTest/JPNGTest-Prefix.pch";
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				INFOPLIST_FILE = "JPNGTest/JPNGTest-Info.plist";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.charcoaldesign.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};
@@ -375,6 +379,7 @@
 				GCC_PREFIX_HEADER = "JPNGTest/JPNGTest-Prefix.pch";
 				GCC_TREAT_WARNINGS_AS_ERRORS = YES;
 				INFOPLIST_FILE = "JPNGTest/JPNGTest-Info.plist";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.charcoaldesign.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};

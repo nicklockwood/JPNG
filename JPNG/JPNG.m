@@ -1,7 +1,7 @@
 //
 //  JPNG.m
 //
-//  Version 1.2.1
+//  Version 1.2.2
 //
 //  Created by Nick Lockwood on 05/01/2013.
 //  Copyright 2013 Charcoal Design
@@ -62,14 +62,14 @@ uint32_t JPNGIdentifier = 'JPNG';
 
 CGImageRef CGImageCreateWithJPNGData(NSData *data, BOOL forceDecompression)
 {
-    if ([data length] <= sizeof(JPNGFooter))
+    if (data.length <= sizeof(JPNGFooter))
     {
         //not a JPNG
         return NULL;
     }
     
     JPNGFooter footer;
-    [data getBytes:&footer range:NSMakeRange([data length] - sizeof(JPNGFooter), sizeof(JPNGFooter))];
+    [data getBytes:&footer range:NSMakeRange(data.length - sizeof(JPNGFooter), sizeof(JPNGFooter))];
     if (footer.identifier != JPNGIdentifier && footer.identifier != 'JPEG')
     {
         //not a JPNG
@@ -103,7 +103,7 @@ CGImageRef CGImageCreateWithJPNGData(NSData *data, BOOL forceDecompression)
         CGColorSpaceRef colorSpace = CGImageGetColorSpace(image);
         CGBitmapInfo bitmapInfo = (CGBitmapInfo)(kCGImageAlphaPremultipliedFirst | kCGBitmapByteOrder32Little);
         CGContextRef context = CGBitmapContextCreate(NULL, width, height, 8, width * 4, colorSpace, bitmapInfo);
-        CGRect rect = CGRectMake(0.0f, 0.0f, width, height);
+        CGRect rect = CGRectMake(0.0, 0.0, width, height);
         CGContextClipToMask(context, rect, mask);
         CGContextDrawImage(context, rect, image);
         CGImageRef result = CGBitmapContextCreateImage(context);
@@ -127,27 +127,20 @@ NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
     //split image and mask data
     size_t width = CGImageGetWidth(image);
     size_t height = CGImageGetHeight(image);
+    size_t numSamples = CGImageGetBitsPerPixel(image) / CGImageGetBitsPerComponent(image);
     CFDataRef pixelData = CGDataProviderCopyData(CGImageGetDataProvider(image));
-    uint8_t *colorData = (uint8_t *)CFDataGetBytePtr(pixelData);
+    const uint8_t *colorData = (const uint8_t *)CFDataGetBytePtr(pixelData);
     uint8_t *alphaData = (uint8_t *)malloc(width * height);
     for (size_t i = 0; i < height; i++)
     {
         for (size_t j = 0; j < width; j++)
         {
             size_t index = i * width + j;
-            alphaData[index] = colorData[index * 4 + 3];
+            alphaData[index] = colorData[index * numSamples + (numSamples - 1)];
         }
     }
     CFRelease(pixelData);
-    
-    //get color image
-    CGColorSpaceRef colorSpace = CGImageGetColorSpace(image);
-    CGBitmapInfo byteOrder = CGImageGetBitmapInfo(image) & kCGBitmapByteOrderMask;
-    CGBitmapInfo bitmapInfo = (CGBitmapInfo)(kCGImageAlphaPremultipliedLast | byteOrder);
-    CGContextRef context = CGBitmapContextCreate(colorData, width, height, 8, width * 4, colorSpace, bitmapInfo);
-    image = CGBitmapContextCreateImage(context);
-    CGContextRelease(context);
-    
+
     //get image jpeg data
     CFMutableDataRef imageData = CFDataCreateMutable(NULL, 0);
     CGImageDestinationRef destination = CGImageDestinationCreateWithData(imageData, kUTTypeJPEG, 1, NULL);
@@ -160,11 +153,10 @@ NSData *CGImageJPNGRepresentation(CGImageRef image, CGFloat quality)
         imageData = NULL;
     }
     CFRelease(destination);
-    CGImageRelease(image);
 
     //get mask image
-    colorSpace = CGColorSpaceCreateDeviceGray();
-    context = CGBitmapContextCreate(alphaData, width, height, 8, width, colorSpace, (CGBitmapInfo)0);
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
+    CGContextRef context = CGBitmapContextCreate(alphaData, width, height, 8, width, colorSpace, (CGBitmapInfo)0);
     CGImageRef mask = CGBitmapContextCreateImage(context);
     CGContextRelease(context);
     CGColorSpaceRelease(colorSpace);
@@ -258,7 +250,7 @@ NSData *NSImageJPNGRepresentation(NSImage *image, CGFloat quality)
         size.width = [representation pixelsWide];
         size.height = [representation pixelsHigh];
     }
-    NSRect rect = NSMakeRect(0.0f, 0.0f, size.width, size.height);
+    NSRect rect = NSMakeRect(0.0, 0.0, size.width, size.height);
     CGImageRef imageRef = [image CGImageForProposedRect:&rect context:NULL hints:nil];
     return CGImageJPNGRepresentation(imageRef, quality);
 }
@@ -302,9 +294,9 @@ void JPNG_getNormalizedFile(NSString **path, CGFloat *scale)
     else
     {
         //get path extension
-        NSString *extension = [*path pathExtension];
-        if (![extension length]) extension = @"png";
-        *path = [*path stringByDeletingPathExtension];
+        NSString *extension = (*path).pathExtension;
+        if (!extension.length) extension = @"png";
+        *path = (*path).stringByDeletingPathExtension;
         
         //generate suffixes
         NSArray *suffixes = @[[@"." stringByAppendingString:extension]];
@@ -323,7 +315,7 @@ void JPNG_getNormalizedFile(NSString **path, CGFloat *scale)
 #else
         
         //get screen scale
-        CGFloat deviceScale = 1.0f;
+        CGFloat deviceScale = 1.0;
         if ([NSScreen instancesRespondToSelector:@selector(backingScaleFactor)])
         {
             deviceScale = [[NSScreen mainScreen] backingScaleFactor];
@@ -331,28 +323,33 @@ void JPNG_getNormalizedFile(NSString **path, CGFloat *scale)
         
 #endif
         
-        //check for Retina version
-        if (deviceScale == 2.0f)
-        {
-            for (NSString *suffix in [suffixes objectEnumerator])
-            {
-                suffixes = [suffixes arrayByAddingObject:[@"@2x" stringByAppendingString:suffix]];
-            }
-        }
-        
+        //check for Retina versions
+        //order by closest match that's greater than device scale
+        NSArray *scales = @[@1.0, @2.0, @3.0];
+        scales = [scales sortedArrayUsingComparator:^NSComparisonResult(NSNumber *a, NSNumber *b) {
+            CGFloat aDelta = deviceScale - a.doubleValue;
+            if (aDelta > 0) aDelta = -aDelta - 10;
+            CGFloat bDelta = deviceScale - b.doubleValue;
+            if (bDelta > 0) bDelta = -bDelta - 10;
+            return [@(bDelta) compare:@(aDelta)];
+        }];
+
         //try all suffixes
-        for (NSString *suffix in [suffixes reverseObjectEnumerator])
+        for (NSNumber *testScale in scales)
         {
-            NSString *_path = [*path stringByAppendingString:suffix];
-            if ([[NSFileManager defaultManager] fileExistsAtPath:_path])
+            *scale = testScale.doubleValue;
+            NSString *scaleSuffix = (*scale > 1.0)? [NSString stringWithFormat:@"@%gx", *scale]: @"";
+            for (NSString *suffix in [suffixes reverseObjectEnumerator])
             {
-                *path = _path;
-                break;
+                NSString *testPath = [*path stringByAppendingFormat:@"%@%@", scaleSuffix, suffix];
+                if ([[NSFileManager defaultManager] fileExistsAtPath:testPath])
+                {
+                    //set path
+                    *path = testPath;
+                    return;
+                }
             }
         }
-        
-        //get scale from file suffix
-        *scale = ([*path rangeOfString:@"@2x"].location != NSNotFound)? 2.0f: 1.0f;
     }
 }
 
@@ -397,7 +394,7 @@ void JPNG_getNormalizedFile(NSString **path, CGFloat *scale)
 {
     //emulate Apple's file suffix detection
     NSString *path = file;
-    CGFloat scale = 1.0f;
+    CGFloat scale = 1.0;
     JPNG_getNormalizedFile(&path, &scale);
     
     //need to handle loading ourselves
@@ -408,13 +405,13 @@ void JPNG_getNormalizedFile(NSString **path, CGFloat *scale)
 + (id)JPNG_imageNamed:(NSString *)name
 {
     //only check file extension - too expensive to check file footer
-    if ([[[name pathExtension] lowercaseString] isEqualToString:@"jpng"])
+    if ([name.pathExtension.lowercaseString isEqualToString:@"jpng"])
     {
         @synchronized ([self class])
         {
             //emulate Apple's file suffix detection
-            NSString *path = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:name];
-            CGFloat scale = 1.0f;
+            NSString *path = [[NSBundle mainBundle].resourcePath stringByAppendingPathComponent:name];
+            CGFloat scale = 1.0;
             JPNG_getNormalizedFile(&path, &scale);
             
             //need to handle loading & caching ourselves
@@ -476,7 +473,7 @@ void JPNG_getNormalizedFile(NSString **path, CGFloat *scale)
 {
     //emulate Apple's file suffix detection
     NSString *path = file;
-    CGFloat scale = 1.0f;
+    CGFloat scale = 1.0;
     JPNG_getNormalizedFile(&path, &scale);
     
     //need to handle loading ourselves
@@ -498,7 +495,7 @@ void JPNG_getNormalizedFile(NSString **path, CGFloat *scale)
         {
             //emulate Apple's file suffix detection
             NSString *path = [[[NSBundle mainBundle] resourcePath] stringByAppendingPathComponent:name];
-            CGFloat scale = 1.0f;
+            CGFloat scale = 1.0;
             JPNG_getNormalizedFile(&path, &scale);
             
             //need to handle loading & caching ourselves
